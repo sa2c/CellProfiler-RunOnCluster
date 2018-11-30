@@ -19,22 +19,18 @@ YES          YES          NO
 ============ ============ ===============
 """
 
-# Questions:
-# BATCH_PROCESSING_HELP_REF
-# F_BATCH_DATA, F_BATCH_DATA_H5
-
 # Cluster settings need to be added and saved as preferences
 #  (not per pipeline)
 # The output files for each module should be mapped to a cluster directory
 #  and copied to the correct place a the end
 # For now asume all results go to the same place
 
-from cellprofiler.gui.help.content import BATCH_PROCESSING_HELP_REF
 
 import logging
 logger = logging.getLogger(__name__)
 import numpy as np
 import os
+import time
 import re
 import sys
 import zlib
@@ -50,6 +46,12 @@ import cellprofiler.preferences as cpprefs
 import cellprofiler.workspace as cpw
 
 from cellprofiler.measurement import F_BATCH_DATA, F_BATCH_DATA_H5
+
+from rynner.rynner import Rynner
+from libsubmit import SSHChannel
+from libsubmit.providers.slurm.slurm import SlurmProvider
+from libsubmit.launchers.launchers import SimpleLauncher
+import tempfile
 
 '''# of settings aside from the mappings'''
 S_FIXED_COUNT = 8
@@ -69,34 +71,50 @@ class RunOnCluster(cpm.Module):
     def volumetric(self):
         return True
 
-    #
     def create_settings(self):
         '''Create the module settings and name the module'''
+        self.username = cps.Text( 
+            "Username",
+            "",
+            doc = "Enter your SCW username",
+        )
+        self.custom_output_directory = cps.Text(
+            "Output folder path",
+            cpprefs.get_default_output_directory(), doc="Enter the path to the output folder.")
+
         self.show_advanced_setting = cps.Binary(
                 "Advanced Settings", True, doc="""Show advanced settings.""")
 
         self.batch_mode = cps.Binary("Hidden: in batch mode", False)
-
-        self.default_image_directory = cps.Setting("Hidden: default input folder at time of run",
-                cpprefs.get_default_image_directory())
         self.revision = cps.Integer("Hidden: revision number", 0)
 
     def settings(self):
-        result = [self.show_advanced_setting,self.batch_mode,
-                  self.default_image_directory, self.revision]
+        result = [
+            self.username,
+            self.custom_output_directory,            
+            self.show_advanced_setting,
+            self.batch_mode,
+            self.revision
+        ]
         return result
 
     def prepare_settings(self, setting_values):
         pass
 
     def visible_settings(self):
-        result = [self.show_advanced_setting]
+        result = [
+            self.username,
+            self.custom_output_directory,
+            self.show_advanced_setting,
+        ]
         return result
 
     def help_settings(self):
         help_settings = [
-            self.wants_default_output_directory,
-            self.custom_output_directory]
+            self.username,
+            self.custom_output_directory,
+            self.show_advanced_setting,
+        ]
 
         return help_settings
 
@@ -104,20 +122,80 @@ class RunOnCluster(cpm.Module):
         '''Invoke the image_set_list pickling mechanism and save the pipeline'''
 
         pipeline = workspace.pipeline
-        image_set_list = workspace.image_set_list
 
         if pipeline.test_mode:
             return True
         if self.batch_mode.value:
             return True
         else:
+            # Create a connection
+            password = raw_input('password:')
+            print(password)
+
+            provider = SlurmProvider(
+                'compute',
+                channel=SSHChannel(
+                    hostname='sunbird.swansea.ac.uk',
+                    username=self.username.value,
+                    password=password,
+                    script_dir='rynner',
+                ),
+                nodes_per_block=1,
+                tasks_per_node=1,
+                walltime="00:00:10",
+                init_blocks=1,
+                max_blocks=1,
+                launcher = SimpleLauncher(),
+            )
+
             # save the pipeline
-            print( pipeline, image_set_list, workspace )
             path = self.save_pipeline(workspace)
+
+            # Establish connection
+            rynner = Rynner(provider)
+
             # Create the run data structure
+            file_list = pipeline.file_list
+            file_list = [name.replace('file:///','') for name in file_list]
+            # Add destination folder for the image files
+            uploads = [[name, 'images'] for name in file_list]
+            uploads +=  [[path,'.']]
+
+            # Create a temporary directory
+            tmpdir = tempfile.mkdtemp()
+
+            # Define the job to run
+            run = rynner.create_run( 
+                script = 'module load java; mkdir results; cellprofiler -c -p Batch_data.h5 -i images/ -o results 2> results/cellprofiler_output;',
+                uploads = uploads,
+                downloads =  [['results',tmpdir]],
+            )
+
             # Copy the pipeline and images accross
+            rynner.upload(run)
+            print('upload')
+            print(run)
+
             # Submit the run
+            rynner.submit(run)
+            print('submit')
+            print(run)
+
             # Store submission data
+            runs = [run]
+
+            # move this to the menu item
+            rynner.update(runs)
+            while run.status != rynner.StatusCompleted:
+                print('Pending')
+                time.sleep(1)
+                rynner.update(runs)
+            print('runs')
+            print(runs)
+            rynner.download(run)
+
+            print(run.downloads[0])
+
             if not cpprefs.get_headless():
                 import wx
                 wx.MessageBox(
@@ -128,7 +206,6 @@ class RunOnCluster(cpm.Module):
 
     def run(self, workspace):
         # The submission happens in prepare run.
-        # If running in batch mode, do nothing here
         pass
 
     def validate_module(self, pipeline):
@@ -144,6 +221,13 @@ class RunOnCluster(cpm.Module):
         if pipeline.test_mode:
             raise cps.ValidationError("RunOnCluster will not produce output in Test Mode",
                                       self.wants_default_output_directory)
+
+    def alter_path(self, path, **varargs):
+        print(path)
+        path = os.path.join('result', os.path.basename(path))
+        path = path.replace('\\', '/')
+        print(path)
+        return path
 
     def save_pipeline(self, workspace, outf=None):
         '''Save the pipeline in Batch_data.h5
@@ -178,7 +262,7 @@ class RunOnCluster(cpm.Module):
                                              workspace.frame)
             # Assuming all results go to the same place, output folder can be set
             # in the script
-            #pipeline.prepare_to_create_batch(target_workspace, self.alter_path)
+            pipeline.prepare_to_create_batch(target_workspace, self.alter_path)
             self_copy = pipeline.module(self.module_num)
             self_copy.revision.value = int(re.sub(r"\.|rc\d{1}", "", cellprofiler.__version__))
             self_copy.batch_mode.value = True
