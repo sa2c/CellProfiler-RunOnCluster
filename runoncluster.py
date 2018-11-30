@@ -224,7 +224,10 @@ class RunOnCluster(cpm.Module):
 
     def alter_path(self, path, **varargs):
         print(path)
-        path = os.path.join('result', os.path.basename(path))
+        if path == cpprefs.get_default_output_directory():
+            path = 'results'
+        else:
+            path = os.path.join('results', os.path.basename(path))
         path = path.replace('\\', '/')
         print(path)
         return path
