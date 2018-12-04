@@ -83,7 +83,15 @@ class RunOnCluster(cpm.Module):
             cpprefs.get_default_output_directory(), doc="Enter the path to the output folder.")
 
         self.show_advanced_setting = cps.Binary(
-                "Advanced Settings", True, doc="""Show advanced settings.""")
+            "Advanced Settings", 
+            True, 
+            doc="""Show advanced settings.""")
+
+        self.check_cluster_button = cps.DoSomething("",
+            "Check Cluster Runs",
+            self.check_cluster)
+
+        self.job_displays = []
 
         self.batch_mode = cps.Binary("Hidden: in batch mode", False)
         self.revision = cps.Integer("Hidden: revision number", 0)
@@ -92,10 +100,13 @@ class RunOnCluster(cpm.Module):
         result = [
             self.username,
             self.custom_output_directory,            
+            self.check_cluster_button,
             self.show_advanced_setting,
             self.batch_mode,
-            self.revision
+            self.revision,
         ]
+        for job_display in self.job_displays:
+            result += [ job_display.display ]
         return result
 
     def prepare_settings(self, setting_values):
@@ -105,8 +116,11 @@ class RunOnCluster(cpm.Module):
         result = [
             self.username,
             self.custom_output_directory,
+            self.check_cluster_button,
             self.show_advanced_setting,
         ]
+        for job_display in self.job_displays:
+            result += [job_display.display]
         return result
 
     def help_settings(self):
@@ -173,13 +187,9 @@ class RunOnCluster(cpm.Module):
 
             # Copy the pipeline and images accross
             rynner.upload(run)
-            print('upload')
-            print(run)
 
             # Submit the run
             rynner.submit(run)
-            print('submit')
-            print(run)
 
             # Store submission data
             runs = [run]
@@ -194,8 +204,6 @@ class RunOnCluster(cpm.Module):
             print(runs)
             rynner.download(run)
 
-            print(run.downloads[0])
-
             if not cpprefs.get_headless():
                 import wx
                 wx.MessageBox(
@@ -207,6 +215,24 @@ class RunOnCluster(cpm.Module):
     def run(self, workspace):
         # The submission happens in prepare run.
         pass
+
+    def add_cluster_run( self, run ):
+        display = cps.HTMLText(
+            '',
+            content='''
+            <div>A job</div>
+            ''',
+            size=(30, 2)
+        )
+
+        job_display = cps.SettingsGroup()
+        job_display.append( "display", display )
+        job_display.append( "divider", cps.Divider())
+        
+        self.job_displays.append( job_display )
+    
+    def check_cluster( self ):
+        self.add_cluster_run( [] )
 
     def validate_module(self, pipeline):
         '''Make sure the module settings are valid'''
