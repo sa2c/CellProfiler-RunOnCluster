@@ -1,4 +1,4 @@
-# coding=utf-8
+# -*- coding: future_fstrings -*-
 
 """
 RunOnCluster
@@ -35,6 +35,8 @@ import re
 import sys
 import zlib
 
+from future import *
+
 import cellprofiler
 import cellprofiler.image as cpi
 import cellprofiler.module as cpm
@@ -51,6 +53,7 @@ from rynner.rynner import Rynner
 from libsubmit import SSHChannel
 from libsubmit.providers.slurm.slurm import SlurmProvider
 from libsubmit.launchers.launchers import SimpleLauncher
+from libsubmit.channels.errors import SSHException
 import tempfile
 
 '''# of settings aside from the mappings'''
@@ -67,6 +70,35 @@ class RunOnCluster(cpm.Module):
     module_name = "RunOnCluster"
     category = 'Other'
     variable_revision_number = 8
+    runs = []
+
+    rynner = None
+
+    def create_rynner( self ):
+        # Create a connection
+        password = raw_input('password:')
+
+        tmpdir = tempfile.mkdtemp()
+        try:
+            provider = SlurmProvider(
+                'compute',
+                channel=SSHChannel(
+                    hostname='sunbird.swansea.ac.uk',
+                    username=self.username.value,
+                    password=password,
+                    script_dir=tmpdir,
+                ),
+                nodes_per_block=1,
+                tasks_per_node=1,
+                walltime="00:00:10",
+                init_blocks=1,
+                max_blocks=1,
+                launcher = SimpleLauncher(),
+            )
+            self.rynner = Rynner(provider)
+
+        except SSHException:
+            self.rynner = None
 
     def volumetric(self):
         return True
@@ -142,31 +174,11 @@ class RunOnCluster(cpm.Module):
         if self.batch_mode.value:
             return True
         else:
-            # Create a connection
-            password = raw_input('password:')
-            print(password)
-
-            provider = SlurmProvider(
-                'compute',
-                channel=SSHChannel(
-                    hostname='sunbird.swansea.ac.uk',
-                    username=self.username.value,
-                    password=password,
-                    script_dir='rynner',
-                ),
-                nodes_per_block=1,
-                tasks_per_node=1,
-                walltime="00:00:10",
-                init_blocks=1,
-                max_blocks=1,
-                launcher = SimpleLauncher(),
-            )
+            if self.rynner is None:
+                self.create_rynner()
 
             # save the pipeline
             path = self.save_pipeline(workspace)
-
-            # Establish connection
-            rynner = Rynner(provider)
 
             # Create the run data structure
             file_list = pipeline.file_list
@@ -179,30 +191,30 @@ class RunOnCluster(cpm.Module):
             tmpdir = tempfile.mkdtemp()
 
             # Define the job to run
-            run = rynner.create_run( 
+            run = self.rynner.create_run( 
                 script = 'module load java; mkdir results; cellprofiler -c -p Batch_data.h5 -i images/ -o results 2> results/cellprofiler_output;',
                 uploads = uploads,
                 downloads =  [['results',tmpdir]],
             )
 
             # Copy the pipeline and images accross
-            rynner.upload(run)
+            self.rynner.upload(run)
 
             # Submit the run
-            rynner.submit(run)
+            self.rynner.submit(run)
 
             # Store submission data
-            runs = [run]
+            self.runs += [run]
 
             # move this to the menu item
-            rynner.update(runs)
-            while run.status != rynner.StatusCompleted:
-                print('Pending')
-                time.sleep(1)
-                rynner.update(runs)
-            print('runs')
-            print(runs)
-            rynner.download(run)
+            #self.rynner.update(runs)
+            #while run.status != self.rynner.StatusCompleted:
+            #    print('Pending')
+            #    time.sleep(1)
+            #    self.rynner.update(runs)
+            #print('runs')
+            #print(runs)
+            #self.rynner.download(run)
 
             if not cpprefs.get_headless():
                 import wx
@@ -219,9 +231,7 @@ class RunOnCluster(cpm.Module):
     def add_cluster_run( self, run ):
         display = cps.HTMLText(
             '',
-            content='''
-            <div>A job</div>
-            ''',
+            content=f'<div>{run.job_name}: {run.status}</div>',
             size=(30, 2)
         )
 
@@ -232,7 +242,13 @@ class RunOnCluster(cpm.Module):
         self.job_displays.append( job_display )
     
     def check_cluster( self ):
-        self.add_cluster_run( [] )
+        if self.rynner is None:
+            self.create_rynner()
+        self.runs = self.rynner.get_runs()
+        self.rynner.update(self.runs)
+        self.job_displays = []
+        for run in self.runs:
+            self.add_cluster_run( run )
 
     def validate_module(self, pipeline):
         '''Make sure the module settings are valid'''
@@ -249,13 +265,11 @@ class RunOnCluster(cpm.Module):
                                       self.wants_default_output_directory)
 
     def alter_path(self, path, **varargs):
-        print(path)
         if path == cpprefs.get_default_output_directory():
             path = 'results'
         else:
             path = os.path.join('results', os.path.basename(path))
         path = path.replace('\\', '/')
-        print(path)
         return path
 
     def save_pipeline(self, workspace, outf=None):
