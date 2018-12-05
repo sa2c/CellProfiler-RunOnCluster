@@ -34,7 +34,7 @@ import time
 import re
 import sys
 import zlib
-
+import wx
 from future import *
 
 import cellprofiler
@@ -76,7 +76,13 @@ class RunOnCluster(cpm.Module):
 
     def create_rynner( self ):
         # Create a connection
-        password = raw_input('password:')
+        passwd = wx.PasswordEntryDialog(None, "Cluster Password", 'Password','',style=wx.TextEntryDialogStyle)
+        result = passwd.ShowModal()
+        if result == wx.ID_OK:
+            password = passwd.GetValue()
+        else:
+            return False
+        passwd.Destroy()
 
         tmpdir = tempfile.mkdtemp()
         try:
