@@ -53,7 +53,7 @@ from rynner.rynner import Rynner
 from libsubmit import SSHChannel
 from libsubmit.providers.slurm.slurm import SlurmProvider
 from libsubmit.launchers.launchers import SimpleLauncher
-from libsubmit.channels.errors import SSHException
+from libsubmit.channels.errors import SSHException, FileCopyException
 import tempfile
 
 '''# of settings aside from the mappings'''
@@ -92,8 +92,9 @@ class RunOnCluster(cpm.Module):
                     hostname='sunbird.swansea.ac.uk',
                     username=self.username.value,
                     password=password,
-                    script_dir=tmpdir,
+                    script_dir='rynner',
                 ),
+                    script_dir=tmpdir,
                 nodes_per_block=1,
                 tasks_per_node=1,
                 walltime="00:00:10",
@@ -105,6 +106,41 @@ class RunOnCluster(cpm.Module):
 
         except SSHException:
             self.rynner = None
+
+    def upload( self, run ):
+        try:
+            self.rynner.upload(run)
+        except FileCopyException as exception:
+            self.rynner = None
+            raise exception
+
+    def download( self, run ):
+        try:
+            self.rynner.download(run)
+        except FileCopyException as exception:
+            self.rynner = None
+            raise exception
+
+    def submit( self, run ):
+        try:
+            self.rynner.submit(run)
+        except FileCopyException as exception:
+            self.rynner = None
+            raise exception
+
+    def get_runs( self ):
+        try:
+            return self.rynner.get_runs()
+        except FileCopyException as exception:
+            self.rynner = None
+            raise exception
+
+    def update( self, runs ):
+        try:
+            self.rynner.update(runs)
+        except FileCopyException as exception:
+            self.rynner = None
+            raise exception
 
     def volumetric(self):
         return True
@@ -204,26 +240,14 @@ class RunOnCluster(cpm.Module):
             )
 
             # Copy the pipeline and images accross
-            self.rynner.upload(run)
+            self.upload(run)
 
             # Submit the run
-            self.rynner.submit(run)
+            self.submit(run)
 
             # Store submission data
             self.runs += [run]
 
-            # move this to the menu item
-            #self.rynner.update(runs)
-            #while run.status != self.rynner.StatusCompleted:
-            #    print('Pending')
-            #    time.sleep(1)
-            #    self.rynner.update(runs)
-            #print('runs')
-            #print(runs)
-            #self.rynner.download(run)
-
-            if not cpprefs.get_headless():
-                import wx
                 wx.MessageBox(
                     "RunOnCluster submitted the run to the cluster",
                     caption="RunOnCluster: Batch job submitted",
@@ -250,8 +274,8 @@ class RunOnCluster(cpm.Module):
     def check_cluster( self ):
         if self.rynner is None:
             self.create_rynner()
-        self.runs = self.rynner.get_runs()
-        self.rynner.update(self.runs)
+        self.runs = self.get_runs()
+        self.update(self.runs)
         self.job_displays = []
         for run in self.runs:
             self.add_cluster_run( run )
