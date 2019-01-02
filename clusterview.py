@@ -80,7 +80,7 @@ class ClusterviewFrame(wx.Frame):
         vbox.Add(line, flag=wx.EXPAND|wx.BOTTOM, border=10)
 
         self.run_displays = []
-        for run in self.runs:
+        for run in sorted(self.runs, key=lambda k: k['upload_time'], reverse = True):
             hbox1 = wx.BoxSizer(wx.HORIZONTAL)
             st = wx.StaticText(self.panel, label=run.job_name+":")
             st.SetFont(font)
@@ -127,6 +127,9 @@ class ClusterviewFrame(wx.Frame):
         except FileCopyException as exception:
             self.rynner = None
             raise exception
+        self.runs = [ r for r in self.runs if 'upload_time' in r ]
+
+            
 
     def check_cluster( self ):
         '''Get all runs from the cluster and list in the UI'''
@@ -138,6 +141,8 @@ class ClusterviewFrame(wx.Frame):
     def download( self, run ):
         if self.rynner is None:
             self.rynner = CPRynner("s.j.m.o.rantaharju")
+        
+        print(run)
 
         default_target = cpprefs.get_default_output_directory()
         dialog = wx.DirDialog (None, "Choose an output directory", default_target,
