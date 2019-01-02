@@ -19,11 +19,6 @@ YES          YES          NO
 ============ ============ ===============
 """
 
-# Cluster settings need to be added and saved as preferences
-#  (not per pipeline)
-# The output files for each module should be mapped to a cluster directory
-#  and copied to the correct place a the end
-# For now asume all results go to the same place
 
 
 import logging
@@ -62,6 +57,52 @@ S_FIXED_COUNT = 8
 S_PER_MAPPING = 2
 
 
+class CPRynner(Rynner):
+    
+    def __init__( self, username = None ):
+        # Create a connection
+        if username is None:
+            dialog = wx.TextEntryDialog(None, "Cluster Username", 'Username','',style=wx.TextEntryDialogStyle)
+            result = dialog.ShowModal()
+            if result == wx.ID_OK:
+                username = dialog.GetValue()
+            else:
+                return None
+            dialog.Destroy()
+        dialog = wx.PasswordEntryDialog(None, "Cluster Password", 'Password','',style=wx.TextEntryDialogStyle)
+        result = dialog.ShowModal()
+        if result == wx.ID_OK:
+            password = dialog.GetValue()
+        else:
+            return None
+        dialog.Destroy()
+
+        tmpdir = tempfile.mkdtemp()
+        try:
+            provider = SlurmProvider(
+                'compute',
+                channel=SSHChannel(
+                    hostname='sunbird.swansea.ac.uk',
+                    username=username,
+                    password=password,
+                    script_dir='rynner',
+                ),
+                script_dir=tmpdir,
+                nodes_per_block=1,
+                tasks_per_node=1,
+                walltime="00:00:10",
+                init_blocks=1,
+                max_blocks=1,
+                launcher = SimpleLauncher(),
+            )
+            super(CPRynner, self).__init__(provider)
+        except SSHException:
+            return None
+    
+
+            
+
+
 class RunOnCluster(cpm.Module):
     #
     # How it works:
@@ -75,37 +116,7 @@ class RunOnCluster(cpm.Module):
     rynner = None
 
     def create_rynner( self ):
-        # Create a connection
-        passwd = wx.PasswordEntryDialog(None, "Cluster Password", 'Password','',style=wx.TextEntryDialogStyle)
-        result = passwd.ShowModal()
-        if result == wx.ID_OK:
-            password = passwd.GetValue()
-        else:
-            return False
-        passwd.Destroy()
-
-        tmpdir = tempfile.mkdtemp()
-        try:
-            provider = SlurmProvider(
-                'compute',
-                channel=SSHChannel(
-                    hostname='sunbird.swansea.ac.uk',
-                    username=self.username.value,
-                    password=password,
-                    script_dir='rynner',
-                ),
-                    script_dir=tmpdir,
-                nodes_per_block=1,
-                tasks_per_node=1,
-                walltime="00:00:10",
-                init_blocks=1,
-                max_blocks=1,
-                launcher = SimpleLauncher(),
-            )
-            self.rynner = Rynner(provider)
-
-        except SSHException:
-            self.rynner = None
+        self.rynner = CPRynner( self.username.value )
 
     def upload( self, run ):
         try:
@@ -248,10 +259,10 @@ class RunOnCluster(cpm.Module):
             # Store submission data
             self.runs += [run]
 
-                wx.MessageBox(
-                    "RunOnCluster submitted the run to the cluster",
-                    caption="RunOnCluster: Batch job submitted",
-                    style=wx.OK | wx.ICON_INFORMATION)
+            wx.MessageBox(
+                "RunOnCluster submitted the run to the cluster",
+                caption="RunOnCluster: Batch job submitted",
+                style=wx.OK | wx.ICON_INFORMATION)
             return False
 
     def run(self, workspace):
@@ -259,6 +270,7 @@ class RunOnCluster(cpm.Module):
         pass
 
     def add_cluster_run( self, run ):
+        '''Add a field for a given run in the UI'''
         display = cps.HTMLText(
             '',
             content=f'<div>{run.job_name}: {run.status}</div>',
@@ -272,6 +284,7 @@ class RunOnCluster(cpm.Module):
         self.job_displays.append( job_display )
     
     def check_cluster( self ):
+        '''Get all runs from the cluster and list in the UI'''
         if self.rynner is None:
             self.create_rynner()
         self.runs = self.get_runs()
