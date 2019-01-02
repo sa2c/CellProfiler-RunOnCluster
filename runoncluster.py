@@ -163,9 +163,6 @@ class RunOnCluster(cpm.Module):
             "",
             doc = "Enter your SCW username",
         )
-        self.custom_output_directory = cps.Text(
-            "Output folder path",
-            cpprefs.get_default_output_directory(), doc="Enter the path to the output folder.")
 
         self.show_advanced_setting = cps.Binary(
             "Advanced Settings", 
@@ -178,9 +175,6 @@ class RunOnCluster(cpm.Module):
     def settings(self):
         result = [
             self.username,
-            self.custom_output_directory,            
-            self.check_cluster_button,
-            self.show_advanced_setting,
             self.batch_mode,
             self.revision,
         ]
@@ -192,16 +186,12 @@ class RunOnCluster(cpm.Module):
     def visible_settings(self):
         result = [
             self.username,
-            self.custom_output_directory,
-            self.check_cluster_button,
-            self.show_advanced_setting,
         ]
         return result
 
     def help_settings(self):
         help_settings = [
             self.username,
-            self.custom_output_directory,
             self.show_advanced_setting,
         ]
 
@@ -230,14 +220,11 @@ class RunOnCluster(cpm.Module):
             uploads = [[name, 'images'] for name in file_list]
             uploads +=  [[path,'.']]
 
-            # Create a temporary directory
-            tmpdir = tempfile.mkdtemp()
-
             # Define the job to run
             run = self.rynner.create_run( 
                 script = 'module load java; mkdir results; cellprofiler -c -p Batch_data.h5 -i images/ -o results 2> results/cellprofiler_output;',
                 uploads = uploads,
-                downloads =  [['results',tmpdir]],
+                downloads =  [['results',cpprefs.get_default_output_directory()]],
             )
 
             # Copy the pipeline and images accross
