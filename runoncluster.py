@@ -172,12 +172,6 @@ class RunOnCluster(cpm.Module):
             True, 
             doc="""Show advanced settings.""")
 
-        self.check_cluster_button = cps.DoSomething("",
-            "Check Cluster Runs",
-            self.check_cluster)
-
-        self.job_displays = []
-
         self.batch_mode = cps.Binary("Hidden: in batch mode", False)
         self.revision = cps.Integer("Hidden: revision number", 0)
 
@@ -190,8 +184,6 @@ class RunOnCluster(cpm.Module):
             self.batch_mode,
             self.revision,
         ]
-        for job_display in self.job_displays:
-            result += [ job_display.display ]
         return result
 
     def prepare_settings(self, setting_values):
@@ -204,8 +196,6 @@ class RunOnCluster(cpm.Module):
             self.check_cluster_button,
             self.show_advanced_setting,
         ]
-        for job_display in self.job_displays:
-            result += [job_display.display]
         return result
 
     def help_settings(self):
@@ -268,30 +258,6 @@ class RunOnCluster(cpm.Module):
     def run(self, workspace):
         # The submission happens in prepare run.
         pass
-
-    def add_cluster_run( self, run ):
-        '''Add a field for a given run in the UI'''
-        display = cps.HTMLText(
-            '',
-            content=f'<div>{run.job_name}: {run.status}</div>',
-            size=(30, 2)
-        )
-
-        job_display = cps.SettingsGroup()
-        job_display.append( "display", display )
-        job_display.append( "divider", cps.Divider())
-        
-        self.job_displays.append( job_display )
-    
-    def check_cluster( self ):
-        '''Get all runs from the cluster and list in the UI'''
-        if self.rynner is None:
-            self.create_rynner()
-        self.runs = self.get_runs()
-        self.update(self.runs)
-        self.job_displays = []
-        for run in self.runs:
-            self.add_cluster_run( run )
 
     def validate_module(self, pipeline):
         '''Make sure the module settings are valid'''
