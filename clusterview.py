@@ -68,7 +68,9 @@ class ClusterviewFrame(wx.Frame):
 
         font = wx.SystemSettings.GetFont(wx.SYS_SYSTEM_FONT)
         font.SetPointSize(9)
-        
+
+        vbox.Add((-1, 5))
+
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         btn = wx.Button(self.panel, label='Update', size=(90, 30))
         hbox.Add(btn)
@@ -122,7 +124,7 @@ class ClusterviewFrame(wx.Frame):
 
     def update( self ):
         if self.rynner is None:
-            self.rynner = CPRynner("s.j.m.o.rantaharju")
+            self.rynner = CPRynner()
         try:
             self.rynner.update(self.runs)
         except FileCopyException as exception:
@@ -135,13 +137,13 @@ class ClusterviewFrame(wx.Frame):
     def check_cluster( self ):
         '''Get all runs from the cluster and list in the UI'''
         if self.rynner is None:
-            self.rynner = CPRynner("s.j.m.o.rantaharju")
+            self.rynner = CPRynner()
         self.runs = self.get_runs()
         self.update()
 
     def download( self, run ):
         if self.rynner is None:
-            self.rynner = CPRynner("s.j.m.o.rantaharju")
+            self.rynner = CPRynner()
         
         print(run)
 

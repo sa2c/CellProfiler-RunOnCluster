@@ -17,23 +17,57 @@ from libsubmit.channels.errors import SSHException, FileCopyException
 import tempfile
 
 
-def _create_rynner(username):
+class LoginDialog(wx.Dialog):
+    """
+    single dialog window asking for a username and a hidden password
+    """
+ 
+    def __init__(self):
+        """Constructor"""
+        super(LoginDialog, self).__init__(None, title="Login", size = (250,180))
+        self.panel = wx.Panel(self) 
+
+        # username field
+        username_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        username_label = wx.StaticText(self.panel, label="Username:")
+        username_sizer.Add(username_label, 0, wx.ALL|wx.CENTER, 5)
+        self.username = wx.TextCtrl(self.panel)
+        username_sizer.Add(self.username, 0, wx.ALL, 5)
+ 
+        # password field
+        password_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        password_label = wx.StaticText(self.panel, label="Password: ")
+        password_sizer.Add(password_label, 0, wx.ALL|wx.CENTER, 5)
+        self.password = wx.TextCtrl(self.panel, style=wx.TE_PASSWORD|wx.TE_PROCESS_ENTER)
+        password_sizer.Add(self.password, 0, wx.ALL, 5)
+ 
+        # The Login button (overwrite self.btn from wx.Dialog)
+        button_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.btn = wx.Button(self.panel, wx.ID_OK, label="Login", size=(60, 30))
+        button_sizer.Add(self.btn, 0, wx.ALL , 5)
+        
+        # Bind password enter press to the button
+        button_event = wx.PyCommandEvent(wx.EVT_BUTTON.typeId,self.btn.GetId())
+        self.password.Bind( wx.EVT_TEXT_ENTER, lambda e: wx.PostEvent(self, button_event) )
+
+        main_sizer = wx.BoxSizer(wx.VERTICAL)
+        main_sizer.Add(username_sizer, 0, wx.ALL, 5)
+        main_sizer.Add(password_sizer, 0, wx.ALL, 5)
+        main_sizer.Add(button_sizer, 0, wx.ALL | wx.ALIGN_CENTER, 5)
+ 
+        self.panel.SetSizer(main_sizer)
+
+
+def _create_rynner():
     ''' Create an instance of Rynner connected to the cluster
     '''
-    if username is None:
-        dialog = wx.TextEntryDialog(None, "Cluster Username", 'Username','',style=wx.TextEntryDialogStyle)
-        result = dialog.ShowModal()
-        if result == wx.ID_OK:
-            username = dialog.GetValue()
-        else:
-            return None
-        dialog.Destroy()
-
-    dialog = wx.PasswordEntryDialog(None, "Cluster Password", 'Password','',style=wx.TextEntryDialogStyle)
+    dialog = LoginDialog()
     result = dialog.ShowModal()
     if result == wx.ID_OK:
-        password = dialog.GetValue()
+        username = dialog.username.GetValue()
+        password = dialog.password.GetValue()
     else:
+        print("login failed")
         return None
     dialog.Destroy()
 
@@ -60,11 +94,11 @@ def _create_rynner(username):
         return None
 
 cprynner = None
-def CPRynner(username):
+def CPRynner():
     ''' Return a shared instance of Rynner
     '''
     global cprynner
     if cprynner is None:
-        cprynner = _create_rynner(username)
+        cprynner = _create_rynner()
     return cprynner
     

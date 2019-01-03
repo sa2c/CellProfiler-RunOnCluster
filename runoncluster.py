@@ -72,7 +72,7 @@ class RunOnCluster(cpm.Module):
     rynner = None
 
     def create_rynner( self ):
-        self.rynner = CPRynner( self.username.value )
+        self.rynner = CPRynner()
 
     def upload( self, run ):
         try:
@@ -114,23 +114,18 @@ class RunOnCluster(cpm.Module):
 
     def create_settings(self):
         '''Create the module settings and name the module'''
-        self.username = cps.Text( 
-            "Username",
-            "",
-            doc = "Enter your SCW username",
+        self.runname = cps.Text( 
+            "Run Name",
+            "Run name",
+            doc = "Enter a recognizable identifier for the run",
         )
-
-        self.show_advanced_setting = cps.Binary(
-            "Advanced Settings", 
-            True, 
-            doc="""Show advanced settings.""")
 
         self.batch_mode = cps.Binary("Hidden: in batch mode", False)
         self.revision = cps.Integer("Hidden: revision number", 0)
 
     def settings(self):
         result = [
-            self.username,
+            self.runname,
             self.batch_mode,
             self.revision,
         ]
@@ -141,14 +136,13 @@ class RunOnCluster(cpm.Module):
 
     def visible_settings(self):
         result = [
-            self.username,
+            self.runname,
         ]
         return result
 
     def help_settings(self):
         help_settings = [
-            self.username,
-            self.show_advanced_setting,
+            self.runname,
         ]
 
         return help_settings
@@ -178,6 +172,7 @@ class RunOnCluster(cpm.Module):
 
             # Define the job to run
             run = self.rynner.create_run( 
+                jobname = self.runname.value,
                 script = 'module load java; mkdir results; cellprofiler -c -p Batch_data.h5 -i images/ -o results 2> results/cellprofiler_output;',
                 uploads = uploads,
                 downloads =  [['results',cpprefs.get_default_output_directory()]],
