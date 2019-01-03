@@ -32,12 +32,13 @@ import cellprofiler.preferences as cpprefs
 from cellprofiler.setting import YES, NO
 from cellprofiler.measurement import R_PARENT, R_CHILD
 
-from runoncluster import CPRynner
 from libsubmit import SSHChannel
 from libsubmit.providers.slurm.slurm import SlurmProvider
 from libsubmit.launchers.launchers import SimpleLauncher
 from libsubmit.channels.errors import SSHException, FileCopyException
 import tempfile
+
+from CPRynner.CPRynner import CPRynner
 
 import wx
 

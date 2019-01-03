@@ -49,58 +49,14 @@ from libsubmit import SSHChannel
 from libsubmit.providers.slurm.slurm import SlurmProvider
 from libsubmit.launchers.launchers import SimpleLauncher
 from libsubmit.channels.errors import SSHException, FileCopyException
+
+from CPRynner.CPRynner import CPRynner
 import tempfile
 
 '''# of settings aside from the mappings'''
 S_FIXED_COUNT = 8
 '''# of settings per mapping'''
 S_PER_MAPPING = 2
-
-
-class CPRynner(Rynner):
-    
-    def __init__( self, username = None ):
-        # Create a connection
-        if username is None:
-            dialog = wx.TextEntryDialog(None, "Cluster Username", 'Username','',style=wx.TextEntryDialogStyle)
-            result = dialog.ShowModal()
-            if result == wx.ID_OK:
-                username = dialog.GetValue()
-            else:
-                return None
-            dialog.Destroy()
-        dialog = wx.PasswordEntryDialog(None, "Cluster Password", 'Password','',style=wx.TextEntryDialogStyle)
-        result = dialog.ShowModal()
-        if result == wx.ID_OK:
-            password = dialog.GetValue()
-        else:
-            return None
-        dialog.Destroy()
-
-        tmpdir = tempfile.mkdtemp()
-        try:
-            provider = SlurmProvider(
-                'compute',
-                channel=SSHChannel(
-                    hostname='sunbird.swansea.ac.uk',
-                    username=username,
-                    password=password,
-                    script_dir='rynner',
-                ),
-                script_dir=tmpdir,
-                nodes_per_block=1,
-                tasks_per_node=1,
-                walltime="00:00:10",
-                init_blocks=1,
-                max_blocks=1,
-                launcher = SimpleLauncher(),
-            )
-            super(CPRynner, self).__init__(provider)
-        except SSHException:
-            return None
-    
-
-            
 
 
 class RunOnCluster(cpm.Module):
