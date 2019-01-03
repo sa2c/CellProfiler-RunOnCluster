@@ -58,47 +58,68 @@ class LoginDialog(wx.Dialog):
         self.panel.SetSizer(main_sizer)
 
 
-def _create_rynner():
-    ''' Create an instance of Rynner connected to the cluster
-    '''
+def _get_username_and_password():
     dialog = LoginDialog()
     result = dialog.ShowModal()
     if result == wx.ID_OK:
         username = dialog.username.GetValue()
         password = dialog.password.GetValue()
+        return [username, password]
     else:
-        print("login failed")
-        return None
+        return [None,None]
     dialog.Destroy()
 
-    tmpdir = tempfile.mkdtemp()
-    try:
-        provider = SlurmProvider(
-            'compute',
-            channel=SSHChannel(
-                hostname='sunbird.swansea.ac.uk',
-                username=username,
-                password=password,
-                script_dir='rynner',
-            ),
-            script_dir=tmpdir,
-            nodes_per_block=1,
-            tasks_per_node=1,
-            walltime="00:00:10",
-            init_blocks=1,
-            max_blocks=1,
-            launcher = SimpleLauncher(),
+def _create_rynner():
+    ''' Create an instance of Rynner connected to the cluster
+    '''
+    username, password = _get_username_and_password()
+    while username is None:
+        wx.MessageBox(
+            'Unable to log in. Check your username and password.',
+            'Info', wx.OK | wx.ICON_INFORMATION
         )
-        return Rynner(provider)
-    except SSHException:
-        return None
+        username, password = _get_username_and_password()
+
+    tmpdir = tempfile.mkdtemp()
+    
+    provider = SlurmProvider(
+        'compute',
+        channel=SSHChannel(
+            hostname='sunbird.swansea.ac.uk',
+            username=username,
+            password=password,
+            script_dir='rynner',
+        ),
+        script_dir=tmpdir,
+        nodes_per_block=1,
+        tasks_per_node=1,
+        walltime="00:00:10",
+        init_blocks=1,
+        max_blocks=1,
+        launcher = SimpleLauncher(),
+    )
+    return Rynner(provider)
 
 cprynner = None
 def CPRynner():
     ''' Return a shared instance of Rynner
     '''
     global cprynner
-    if cprynner is None:
-        cprynner = _create_rynner()
+    while cprynner is None:
+        try:
+            cprynner = _create_rynner()
+            if cprynner is None:
+                wx.MessageBox(
+                    'Unable to log in. Check your username and password. If the problem persists, contact your HPC system administrator.',
+                    'Info', wx.OK | wx.ICON_INFORMATION
+                )
+                username, password = _get_username_and_password()
+        except SSHException:
+            wx.MessageBox(
+                'Unable to contact the cluster. The cluster may be offline or you may have a problem with your internet connection.',
+                'Info', wx.OK | wx.ICON_INFORMATION
+            )
+            return None
+
     return cprynner
     
