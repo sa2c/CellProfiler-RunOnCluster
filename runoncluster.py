@@ -119,13 +119,19 @@ class RunOnCluster(cpm.Module):
             "Run_name",
             doc = "Enter a recognizable identifier for the run (spaces will be replaced by undescores)",
         )
-
+        self.n_measurements = cellprofiler.setting.Integer(
+            "Number of measurements to process",
+            10,
+            minval=1,
+            doc = "The number of independent measurements to process."
+        )
         self.batch_mode = cps.Binary("Hidden: in batch mode", False)
         self.revision = cps.Integer("Hidden: revision number", 0)
 
     def settings(self):
         result = [
             self.runname,
+            self.n_measurements,
             self.batch_mode,
             self.revision,
         ]
@@ -137,12 +143,14 @@ class RunOnCluster(cpm.Module):
     def visible_settings(self):
         result = [
             self.runname,
+            self.n_measurements,
         ]
         return result
 
     def help_settings(self):
         help_settings = [
             self.runname,
+            self.n_measurements,
         ]
 
         return help_settings
@@ -166,17 +174,27 @@ class RunOnCluster(cpm.Module):
             # Create the run data structure
             file_list = pipeline.file_list
             file_list = [name.replace('file:///','') for name in file_list]
+
+            # Divide measurements to up to 40 folders
+            n_measurements = self.n_measurements.value
+            measurements_per_run = int(n_measurements/40) + 1
+            images_per_run = len(file_list)/n_measurements * measurements_per_run
+            image_groups = [(int(i/images_per_run), name) for i, name in enumerate(file_list)]
+
             # Add destination folder for the image files
-            uploads = [[name, 'images'] for name in file_list]
+            uploads = [[name, f'run{str(g)}/images'] for g,name in image_groups]
             uploads +=  [[path,'.']]
 
             # Define the job to run
             run = self.rynner.create_run( 
                 jobname = self.runname.value.replace(' ','_'),
-                script = 'module load java; mkdir results; cellprofiler -c -p Batch_data.h5 -i images/ -o results 2> results/cellprofiler_output;',
+                script = f'module load java; printf %s\\\\n {{0..{n_measurements-1}}} | xargs -P 40 -n 1 -IX bash -c "cd runX ; cellprofiler -c -p ../Batch_data.h5 -i images -f 1 -l {measurements_per_run} " ; mv run*/results/*.tif results/; ',
                 uploads = uploads,
                 downloads =  [['results',cpprefs.get_default_output_directory()]],
             )
+            #
+            # printf %s\\n {0..2} | xargs -P 40 -n 1 -I{} cellprofiler -c -p Batch_data.h5 -i images{} -o results{} -f 1 -l 1
+            #
 
             # Copy the pipeline and images accross
             self.upload(run)
