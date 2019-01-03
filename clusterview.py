@@ -129,12 +129,12 @@ class ClusterviewFrame(wx.Frame):
         if self.rynner is None:
             self.rynner = CPRynner()
         self.runs = [ r for r in self.get_runs() if 'upload_time' in r ]
+        self.rynner.update(self.runs)
 
     def check_cluster( self ):
         '''Get all runs from the cluster and list in the UI'''
         if self.rynner is None:
             self.rynner = CPRynner()
-        self.runs = self.get_runs()
         self.update()
 
     def download( self, run ):
@@ -207,7 +207,6 @@ class clusterView(cpm.Module):
         pass
 
     def run_as_data_tool(self):
-        print("Running as data tool")
         frame = ClusterviewFrame(wx.GetApp().frame, 'Cluster View')
         frame.Show()
         pass

@@ -18,7 +18,7 @@ import tempfile
 
 class LoginDialog(wx.Dialog):
     """
-    single dialog window asking for a username and a hidden password
+    A dialog window asking for a username and a password
     """
  
     def __init__(self):
