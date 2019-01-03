@@ -46,7 +46,7 @@ import wx
 class ClusterviewFrame(wx.Frame):
 
     def __init__(self, parent, title):
-        super(ClusterviewFrame, self).__init__(parent, title=title)
+        super(ClusterviewFrame, self).__init__(parent, title=title, size = (250,400))
 
         self.rynner = None
         self.check_cluster()
@@ -55,7 +55,7 @@ class ClusterviewFrame(wx.Frame):
 
     def InitUI(self):
 
-        self.panel = wx.Panel(self)
+        self.panel = wx.lib.scrolledpanel.ScrolledPanel(self, size = (250,400))
 
         self.panel.SetBackgroundColour('#ededed')
         self.vbox = wx.BoxSizer(wx.VERTICAL)
@@ -63,6 +63,8 @@ class ClusterviewFrame(wx.Frame):
         self.build_view(self.vbox)
 
         self.panel.SetSizer(self.vbox)
+        self.panel.SetAutoLayout(1)
+        self.panel.SetupScrolling(scroll_x=False, scroll_y=True)
 
     def build_view(self, vbox):
 
@@ -111,9 +113,10 @@ class ClusterviewFrame(wx.Frame):
 
     def on_update_click( self, event ):
         self.update()
-        self.vbox.Clear(True) 
+        self.vbox.Clear(True)
         self.build_view(self.vbox)
         self.vbox.Layout() 
+        self.FitInside()
 
     def get_runs( self ):
         try:
@@ -125,14 +128,7 @@ class ClusterviewFrame(wx.Frame):
     def update( self ):
         if self.rynner is None:
             self.rynner = CPRynner()
-        try:
-            self.rynner.update(self.runs)
-        except FileCopyException as exception:
-            self.rynner = None
-            raise exception
-        self.runs = [ r for r in self.runs if 'upload_time' in r ]
-
-            
+        self.runs = [ r for r in self.get_runs() if 'upload_time' in r ]
 
     def check_cluster( self ):
         '''Get all runs from the cluster and list in the UI'''
@@ -144,8 +140,6 @@ class ClusterviewFrame(wx.Frame):
     def download( self, run ):
         if self.rynner is None:
             self.rynner = CPRynner()
-        
-        print(run)
 
         default_target = cpprefs.get_default_output_directory()
         dialog = wx.DirDialog (None, "Choose an output directory", default_target,
@@ -173,7 +167,13 @@ class ClusterviewFrame(wx.Frame):
         tmpdir = os.path.join(tmpdir,'results')
         files = os.listdir(tmpdir)
         for f in files:
-            shutil.move(os.path.join(tmpdir,f), target_directory)
+            try:
+                shutil.move(os.path.join(tmpdir,f), target_directory)
+            except:
+                wx.MessageBox(
+                    "Failed to move a file to the destination",
+                    caption="File error",
+                    style=wx.OK | wx.ICON_INFORMATION)
             
 
 

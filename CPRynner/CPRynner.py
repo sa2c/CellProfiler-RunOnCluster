@@ -1,8 +1,7 @@
 # -*- coding: future_fstrings -*-
 """
 Creates an instance of Rynner to be shared between the
-clusterview and runnoncluster plugins. Implements safeguards
-for file handling and ssh execptions.
+clusterview and runnoncluster plugins.
 """
 
 import os, shutil
