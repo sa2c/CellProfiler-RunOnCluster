@@ -164,11 +164,9 @@ class ClusterviewFrame(wx.Frame):
             self.rynner = None
             raise exception
         
-        tmpdir = os.path.join(tmpdir,'results')
-        files = os.listdir(tmpdir)
-        for f in files:
+        for folder,_ in run.downloads:
             try:
-                shutil.move(os.path.join(tmpdir,f), os.path.join(target_directory,f) )
+                shutil.move( os.path.join(tmpdir, folder), os.path.join(target_directory,folder) )
             except:
                 wx.MessageBox(
                     "Failed to move a file to the destination",

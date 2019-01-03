@@ -185,16 +185,17 @@ class RunOnCluster(cpm.Module):
             uploads = [[name, f'run{str(g)}/images'] for g,name in image_groups]
             uploads +=  [[path,'.']]
 
+            # The runs are downloaded in their separate folders. They can be processed later
+            output_dir = cpprefs.get_default_output_directory()
+            downloads = [ [f"run{f}",output_dir] for f in range(0,n_measurements)]
+
             # Define the job to run
             run = self.rynner.create_run( 
                 jobname = self.runname.value.replace(' ','_'),
-                script = f'module load java; printf %s\\\\n {{0..{n_measurements-1}}} | xargs -P 40 -n 1 -IX bash -c "cd runX ; cellprofiler -c -p ../Batch_data.h5 -i images -f 1 -l {measurements_per_run} "; mkdir results; mv run*/results/*.tif results/; ',
+                script = f'module load java; printf %s\\\\n {{0..{n_measurements-1}}} | xargs -P 40 -n 1 -IX bash -c "cd runX ; cellprofiler -c -p ../Batch_data.h5 -o results -i images -f 1 -l {measurements_per_run} 2>>../cellprofiler_output ";',
                 uploads = uploads,
-                downloads =  [['results',cpprefs.get_default_output_directory()]],
+                downloads =  downloads,
             )
-            #
-            # printf %s\\n {0..2} | xargs -P 40 -n 1 -I{} cellprofiler -c -p Batch_data.h5 -i images{} -o results{} -f 1 -l 1
-            #
 
             # Copy the pipeline and images accross
             self.upload(run)
