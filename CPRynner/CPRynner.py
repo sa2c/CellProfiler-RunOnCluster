@@ -4,7 +4,6 @@ Creates an instance of Rynner to be shared between the
 clusterview and runnoncluster plugins.
 """
 
-import os, shutil
 import wx
 from future import *
 

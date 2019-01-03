@@ -168,7 +168,7 @@ class ClusterviewFrame(wx.Frame):
         files = os.listdir(tmpdir)
         for f in files:
             try:
-                shutil.move(os.path.join(tmpdir,f), target_directory)
+                shutil.move(os.path.join(tmpdir,f), os.path.join(target_directory,f) )
             except:
                 wx.MessageBox(
                     "Failed to move a file to the destination",
