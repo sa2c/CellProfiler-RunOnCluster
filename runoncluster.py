@@ -188,7 +188,7 @@ class RunOnCluster(cpm.Module):
             # Define the job to run
             run = self.rynner.create_run( 
                 jobname = self.runname.value.replace(' ','_'),
-                script = f'module load java; printf %s\\\\n {{0..{n_measurements-1}}} | xargs -P 40 -n 1 -IX bash -c "cd runX ; cellprofiler -c -p ../Batch_data.h5 -i images -f 1 -l {measurements_per_run} " ; mv run*/results/*.tif results/; ',
+                script = f'module load java; printf %s\\\\n {{0..{n_measurements-1}}} | xargs -P 40 -n 1 -IX bash -c "cd runX ; cellprofiler -c -p ../Batch_data.h5 -i images -f 1 -l {measurements_per_run} "; mkdir results; mv run*/results/*.tif results/; ',
                 uploads = uploads,
                 downloads =  [['results',cpprefs.get_default_output_directory()]],
             )
