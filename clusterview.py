@@ -77,8 +77,13 @@ class ClusterviewFrame(wx.Frame):
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         btn = wx.Button(self.panel, label='Update', size=(90, 30))
         hbox.Add(btn)
-        vbox.Add(hbox, flag=wx.ALIGN_LEFT|wx.LEFT, border=10)
         btn.Bind(wx.EVT_BUTTON, self.on_update_click )
+
+        btn = wx.Button(self.panel, label='Logout', size=(90, 30))
+        hbox.Add(btn)
+        btn.Bind(wx.EVT_BUTTON, self.on_logout_click )
+
+        vbox.Add(hbox, flag=wx.ALIGN_LEFT|wx.LEFT, border=10)
 
         vbox.Add((-1, 5))
 
@@ -118,6 +123,10 @@ class ClusterviewFrame(wx.Frame):
         self.build_view(self.vbox)
         self.vbox.Layout() 
         self.FitInside()
+
+    def on_logout_click( self, event ):
+        self.rynner.provider.channel.close()
+        self.rynner = None
 
     def get_runs( self ):
         try:
@@ -190,9 +199,8 @@ class ClusterviewFrame(wx.Frame):
                     while os.path.isfile(new_name):
                         n += 1
                         new_name = stripped_name + '_' +str(n)+suffix
-                    shutil.move( filename,  )
+                    shutil.move( filename,  os.path.join(target_directory, new_name))
             except Exception as e:
-                print(e)
                 wx.MessageBox(
                     "Failed to move a file to the destination",
                     caption="File error",
