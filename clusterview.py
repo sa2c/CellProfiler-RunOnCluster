@@ -24,6 +24,7 @@ logger = logging.getLogger(__package__)
 import numpy as np
 import six
 import os, shutil
+import csv
 
 import cellprofiler.module as cpm
 import cellprofiler.measurement as cpmeas
@@ -164,16 +165,74 @@ class ClusterviewFrame(wx.Frame):
             self.rynner = None
             raise exception
         
-        for folder,_ in run.downloads:
+        for runfolder, localdir in run.downloads:
+            self.handle_result_file( 
+                os.path.join(localdir, runfolder, 'results'),
+                target_directory
+            )
+    
+    def handle_result_file( self, filename, target_directory ):
+        if os.path.isdir(filename):
+            for f in os.listdir(filename):
+                self.handle_result_file( os.path.join(filename, f), target_directory)
+        else:
             try:
-                shutil.move( os.path.join(tmpdir, folder), os.path.join(target_directory,folder) )
-            except:
+                name = os.path.basename(filename)
+                target_file = os.path.join(target_directory, name)
+                if not os.path.isfile(target_file):
+                    shutil.move( filename, target_directory )
+                elif filename.endswith('.csv'):
+                    self.handle_csv( filename, target_file )
+                else:
+                    stripped_name, suffix = os.path.splitext(name)
+                    n=2
+                    new_name = stripped_name + '_' +str(n)+suffix
+                    while os.path.isfile(new_name):
+                        n += 1
+                        new_name = stripped_name + '_' +str(n)+suffix
+                    shutil.move( filename,  )
+            except Exception as e:
+                print(e)
                 wx.MessageBox(
                     "Failed to move a file to the destination",
                     caption="File error",
                     style=wx.OK | wx.ICON_INFORMATION)
-            
 
+    def handle_csv( self, source, destination ):
+        ''' Write the data rows of a csv file into an existing csv file.
+            Fix image numbering before writing '''
+        # First check if the file contains the image number
+        outfile = open(destination,"rb")
+        header = outfile.next()
+        has_image_num = False
+        for index, cell in enumerate(header.split(',')):
+            if cell == 'ImageNumber':
+                image_num_cell = index
+                has_image_num = True
+        
+        # If the image number is included, find the largest value
+        if has_image_num:
+            last_image_num = 1
+            for row in outfile:
+                image_num = int(row.split(',')[image_num_cell])
+                last_image_num = max(image_num, last_image_num)
+        outfile.close()
+
+        # Read the source file and write row by row to the destination
+        infile = open(source, 'rb')
+        infile.next()
+        outfile = open(destination,"a")
+        for row in infile:
+            # If the image number is included, correct the number
+            if has_image_num:
+                cells = row.split(',')
+                local_num = int(cells[image_num_cell])
+                cells[image_num_cell] = str(image_num+local_num)
+                row = ','.join(cells)
+            outfile.write(row)
+        outfile.close()
+        infile.close()
+                
 
 
 class clusterView(cpm.Module):
@@ -181,7 +240,7 @@ class clusterView(cpm.Module):
     category = "Data Tools"
     variable_revision_number = 2
 
-    def create_settings(self):     
+    def create_settings(self):
         pass   
 
     def settings(self):
