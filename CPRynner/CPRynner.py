@@ -20,16 +20,16 @@ class LoginDialog(wx.Dialog):
     A dialog window asking for a username and a password
     """
  
-    def __init__(self):
+    def __init__(self, username = ''):
         """Constructor"""
         super(LoginDialog, self).__init__(None, title="Login", size = (250,180))
-        self.panel = wx.Panel(self) 
+        self.panel = wx.Panel(self)
 
         # username field
         username_sizer = wx.BoxSizer(wx.HORIZONTAL)
         username_label = wx.StaticText(self.panel, label="Username:")
         username_sizer.Add(username_label, 0, wx.ALL|wx.CENTER, 5)
-        self.username = wx.TextCtrl(self.panel)
+        self.username = wx.TextCtrl(self.panel, value = username)
         username_sizer.Add(self.username, 0, wx.ALL, 5)
  
         # password field
@@ -57,11 +57,20 @@ class LoginDialog(wx.Dialog):
 
 
 def _get_username_and_password():
-    dialog = LoginDialog()
+    cnfg = wx.Config('CPRynner')
+    if cnfg.Exists('username'):
+        username = cnfg.Read('username')
+    else:
+        username = ''
+
+    dialog = LoginDialog( username )
     result = dialog.ShowModal()
     if result == wx.ID_OK:
         username = dialog.username.GetValue()
         password = dialog.password.GetValue()
+
+        cnfg.Write('username', username)
+
         return [username, password]
     else:
         return [None,None]
