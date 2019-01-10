@@ -119,11 +119,16 @@ class RunOnCluster(cpm.Module):
             "Run_name",
             doc = "Enter a recognizable identifier for the run (spaces will be replaced by undescores)",
         )
-        self.n_measurements = cellprofiler.setting.Integer(
-            "Number of measurements to process",
-            10,
+        self.n_images_per_measurement = cellprofiler.setting.Integer(
+            "Number of images per measurement",
+            1,
             minval=1,
-            doc = "The number of independent measurements to process."
+            doc = "The number of image files in each measurement that must be present for the pipeline to run correctly. This is usually the number of image types in the NamesAndTypes module."
+        )
+        self.type_first = cellprofiler.setting.Binary(
+            text="Image type first",
+            value=True,
+            doc= "Whether the images are ordered by image type first. If not, ordering by measurement first is assumed."
         )
         self.batch_mode = cps.Binary("Hidden: in batch mode", False)
         self.revision = cps.Integer("Hidden: revision number", 0)
@@ -131,7 +136,8 @@ class RunOnCluster(cpm.Module):
     def settings(self):
         result = [
             self.runname,
-            self.n_measurements,
+            self.n_images_per_measurement,
+            self.type_first,
             self.batch_mode,
             self.revision,
         ]
@@ -143,17 +149,27 @@ class RunOnCluster(cpm.Module):
     def visible_settings(self):
         result = [
             self.runname,
-            self.n_measurements,
+            self.n_images_per_measurement,
+            self.type_first,
         ]
         return result
 
     def help_settings(self):
         help_settings = [
             self.runname,
-            self.n_measurements,
+            self.n_images_per_measurement,
+            self.type_first,
         ]
 
         return help_settings
+
+    def group_images( self, list, n_measurements, measurements_per_run, groups_first = True ):
+        ''' Divides a list of images into numbered groups and returns a list enumerated by the group numbers '''
+        if groups_first:
+            images_per_run = len(list)/n_measurements * measurements_per_run
+            return [(int(i/images_per_run), name) for i, name in enumerate(list)]
+        else :
+            return [(int((i%n_measurements)/measurements_per_run), name) for i, name in enumerate(list)]
 
     def prepare_run(self, workspace):
         '''Invoke the image_set_list pickling mechanism and save the pipeline'''
@@ -175,14 +191,16 @@ class RunOnCluster(cpm.Module):
             file_list = pipeline.file_list
             file_list = [name.replace('file:///','') for name in file_list]
 
-            # Divide measurements to up to 40 folders
-            n_measurements = self.n_measurements.value
-            measurements_per_run = int(n_measurements/40) + 1
-            images_per_run = len(file_list)/n_measurements * measurements_per_run
-            image_groups = [(int(i/images_per_run), name) for i, name in enumerate(file_list)]
+            # Divide measurements to up to 40 runs
+            n_runs = 40
+            n_measurements = int(len(file_list)/self.n_images_per_measurement.value)
+            measurements_per_run = int(n_measurements/n_runs) + 1
+            image_groups = self.group_images( file_list, n_measurements, measurements_per_run, self.type_first.value)
 
-            # Add destination folder for the image files
+            # Add image files to uploads
             uploads = [[name, f'run{str(g)}/images'] for g,name in image_groups]
+
+            # Also add the pipeline
             uploads +=  [[path,'.']]
 
             # The runs are downloaded in their separate folders. They can be processed later
