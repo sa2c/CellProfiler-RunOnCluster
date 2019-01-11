@@ -39,7 +39,7 @@ from libsubmit.launchers.launchers import SimpleLauncher
 from libsubmit.channels.errors import SSHException, FileCopyException
 import tempfile
 
-from CPRynner.CPRynner import CPRynner
+import CPRynner.CPRynner as CPRynner
 
 import wx
 
@@ -124,14 +124,14 @@ class ClusterviewFrame(wx.Frame):
         self.FitInside()
 
     def on_logout_click( self, event ):
-        CPRynner().provider.channel.close()
+        CPRynner.logout()
 
     def get_runs( self ):
-        return CPRynner().get_runs()
+        return CPRynner.CPRynner().get_runs()
 
     def update( self ):
         self.runs = [ r for r in self.get_runs() if 'upload_time' in r ]
-        CPRynner().update(self.runs)
+        CPRynner.CPRynner().update(self.runs)
 
     def download( self, run ):
         default_target = cpprefs.get_default_output_directory()
@@ -150,7 +150,7 @@ class ClusterviewFrame(wx.Frame):
         tmpdir = tempfile.mkdtemp()
         # Define the job to run
         run.downloads = [ [d[0], tmpdir] for d in run.downloads ]
-        CPRynner().download(run)
+        CPRynner.CPRynner().download(run)
             
         for runfolder, localdir in run.downloads:
             self.handle_result_file( 

@@ -129,4 +129,12 @@ def CPRynner():
             return None
 
     return cprynner
+
+def logout():
+    ''' Logout and scrap the rynner object
+    '''
+    global cprynner
+    if cprynner is not None:
+        CPRynner().provider.channel.close()
+        cprynner = None
     
