@@ -159,51 +159,52 @@ class RunOnCluster(cpm.Module):
             return True
         else:
             rynner = CPRynner()
+            if rynner is not None:
 
-            # save the pipeline
-            path = self.save_pipeline(workspace)
+                # save the pipeline
+                path = self.save_pipeline(workspace)
 
-            # Create the run data structure
-            file_list = pipeline.file_list
-            file_list = [name.replace('file:///','') for name in file_list]
+                # Create the run data structure
+                file_list = pipeline.file_list
+                file_list = [name.replace('file:///','') for name in file_list]
 
-            # Divide measurements to up to 40 runs
-            n_runs = 40
-            n_measurements = int(len(file_list)/self.n_images_per_measurement.value)
-            measurements_per_run = int(n_measurements/n_runs) + 1
-            image_groups = self.group_images( file_list, n_measurements, measurements_per_run, self.type_first.value)
+                # Divide measurements to up to 40 runs
+                n_runs = 40
+                n_measurements = int(len(file_list)/self.n_images_per_measurement.value)
+                measurements_per_run = int(n_measurements/n_runs) + 1
+                image_groups = self.group_images( file_list, n_measurements, measurements_per_run, self.type_first.value)
 
-            # Add image files to uploads
-            uploads = [[name, f'run{str(g)}/images'] for g,name in image_groups]
+                # Add image files to uploads
+                uploads = [[name, f'run{str(g)}/images'] for g,name in image_groups]
 
-            # Also add the pipeline
-            uploads +=  [[path,'.']]
+                # Also add the pipeline
+                uploads +=  [[path,'.']]
 
-            # The runs are downloaded in their separate folders. They can be processed later
-            output_dir = cpprefs.get_default_output_directory()
-            downloads = [ [f"run{f}",output_dir] for f in range(0,n_measurements)]
+                # The runs are downloaded in their separate folders. They can be processed later
+                output_dir = cpprefs.get_default_output_directory()
+                downloads = [ [f"run{f}",output_dir] for f in range(0,n_measurements)]
 
-            # Define the job to run
-            run = rynner.create_run( 
-                jobname = self.runname.value.replace(' ','_'),
-                script = f'module load java; printf %s\\\\n {{0..{n_measurements-1}}} | xargs -P 40 -n 1 -IX bash -c "cd runX ; cellprofiler -c -p ../Batch_data.h5 -o results -i images -f 1 -l {measurements_per_run} 2>>../cellprofiler_output ";',
-                uploads = uploads,
-                downloads =  downloads,
-            )
+                # Define the job to run
+                run = rynner.create_run( 
+                    jobname = self.runname.value.replace(' ','_'),
+                    script = f'module load java; printf %s\\\\n {{0..{n_measurements-1}}} | xargs -P 40 -n 1 -IX bash -c "cd runX ; cellprofiler -c -p ../Batch_data.h5 -o results -i images -f 1 -l {measurements_per_run} 2>>../cellprofiler_output ";',
+                    uploads = uploads,
+                    downloads =  downloads,
+                )
 
-            # Copy the pipeline and images accross
-            self.upload(run)
+                # Copy the pipeline and images accross
+                self.upload(run)
 
-            # Submit the run
-            self.submit(run)
+                # Submit the run
+                self.submit(run)
 
-            # Store submission data
-            self.runs += [run]
+                # Store submission data
+                self.runs += [run]
 
-            wx.MessageBox(
-                "RunOnCluster submitted the run to the cluster",
-                caption="RunOnCluster: Batch job submitted",
-                style=wx.OK | wx.ICON_INFORMATION)
+                wx.MessageBox(
+                    "RunOnCluster submitted the run to the cluster",
+                    caption="RunOnCluster: Batch job submitted",
+                    style=wx.OK | wx.ICON_INFORMATION)
             return False
 
     def run(self, workspace):

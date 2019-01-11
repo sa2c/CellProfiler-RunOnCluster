@@ -126,12 +126,13 @@ class ClusterviewFrame(wx.Frame):
     def on_logout_click( self, event ):
         CPRynner.logout()
 
-    def get_runs( self ):
-        return CPRynner.CPRynner().get_runs()
-
     def update( self ):
-        self.runs = [ r for r in self.get_runs() if 'upload_time' in r ]
-        CPRynner.CPRynner().update(self.runs)
+        rynner = CPRynner.CPRynner()
+        if rynner is not None:
+            self.runs = [ r for r in rynner.get_runs() if 'upload_time' in r ]
+            rynner.update(self.runs)
+        else:
+            self.runs = []
 
     def download( self, run ):
         default_target = cpprefs.get_default_output_directory()
@@ -150,7 +151,10 @@ class ClusterviewFrame(wx.Frame):
         tmpdir = tempfile.mkdtemp()
         # Define the job to run
         run.downloads = [ [d[0], tmpdir] for d in run.downloads ]
-        CPRynner.CPRynner().download(run)
+
+        rynner = CPRynner.CPRynner()
+        if rynner is not None:
+            rynner.download(run)
             
         for runfolder, localdir in run.downloads:
             self.handle_result_file( 

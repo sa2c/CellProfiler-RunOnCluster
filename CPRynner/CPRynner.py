@@ -23,6 +23,7 @@ class LoginDialog(wx.Dialog):
     def __init__(self, username = ''):
         """Constructor"""
         super(LoginDialog, self).__init__(None, title="Login", size = (250,180))
+
         self.panel = wx.Panel(self)
 
         # username field
@@ -39,13 +40,17 @@ class LoginDialog(wx.Dialog):
         self.password = wx.TextCtrl(self.panel, style=wx.TE_PASSWORD|wx.TE_PROCESS_ENTER)
         password_sizer.Add(self.password, 0, wx.ALL, 5)
  
-        # The Login button (overwrite self.btn from wx.Dialog)
+        # The login and cancel button 
         button_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.btn = wx.Button(self.panel, wx.ID_OK, label="Login", size=(60, 30))
-        button_sizer.Add(self.btn, 0, wx.ALL , 5)
+        self.ok_button = wx.Button(self.panel, wx.ID_OK, label="Login", size=(60, 30))
+        button_sizer.Add(self.ok_button, 0, wx.ALL , 5)
+
+        self.cancel_btn = wx.Button(self.panel, wx.ID_CANCEL, label="Cancel", size=(60, 30))
+        button_sizer.Add(self.cancel_btn, 0, wx.ALL , 5)
         
-        # Bind password enter press to the button
-        button_event = wx.PyCommandEvent(wx.EVT_BUTTON.typeId,self.btn.GetId())
+        # Bind enter press to the button
+        button_event = wx.PyCommandEvent(wx.EVT_BUTTON.typeId,self.ok_button.GetId())
+        self.username.Bind( wx.EVT_TEXT_ENTER, lambda e: wx.PostEvent(self, button_event) )
         self.password.Bind( wx.EVT_TEXT_ENTER, lambda e: wx.PostEvent(self, button_event) )
 
         main_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -80,47 +85,38 @@ def _create_rynner():
     ''' Create an instance of Rynner connected to the cluster
     '''
     username, password = _get_username_and_password()
-    while username is None:
-        wx.MessageBox(
-            'Unable to log in. Check your username and password.',
-            'Info', wx.OK | wx.ICON_INFORMATION
-        )
-        username, password = _get_username_and_password()
+    if username is not None:
 
-    tmpdir = tempfile.mkdtemp()
+        tmpdir = tempfile.mkdtemp()
     
-    provider = SlurmProvider(
-        'compute',
-        channel=SSHChannel(
-            hostname='sunbird.swansea.ac.uk',
-            username=username,
-            password=password,
-            script_dir='rynner',
-        ),
-        script_dir=tmpdir,
-        nodes_per_block=1,
-        tasks_per_node=1,
-        walltime="00:01:00",
-        init_blocks=1,
-        max_blocks=1,
-        launcher = SimpleLauncher(),
-    )
-    return Rynner(provider)
+        provider = SlurmProvider(
+            'compute',
+            channel=SSHChannel(
+                hostname='sunbird.swansea.ac.uk',
+                username=username,
+                password=password,
+                script_dir='rynner',
+            ),
+            script_dir=tmpdir,
+            nodes_per_block=1,
+            tasks_per_node=1,
+            walltime="00:01:00",
+            init_blocks=1,
+            max_blocks=1,
+            launcher = SimpleLauncher(),
+        )
+        return Rynner(provider)
+    else:
+        return None
 
 cprynner = None
 def CPRynner():
     ''' Return a shared instance of Rynner
     '''
     global cprynner
-    while cprynner is None:
+    if cprynner is None:
         try:
             cprynner = _create_rynner()
-            if cprynner is None:
-                wx.MessageBox(
-                    'Unable to log in. Check your username and password. If the problem persists, contact your HPC system administrator.',
-                    'Info', wx.OK | wx.ICON_INFORMATION
-                )
-                username, password = _get_username_and_password()
         except SSHException:
             wx.MessageBox(
                 'Unable to contact the cluster. The cluster may be offline or you may have a problem with your internet connection.',
