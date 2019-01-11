@@ -71,43 +71,20 @@ class RunOnCluster(cpm.Module):
 
     rynner = None
 
-    def create_rynner( self ):
-        self.rynner = CPRynner()
-
     def upload( self, run ):
-        try:
-            self.rynner.upload(run)
-        except FileCopyException as exception:
-            self.rynner = None
-            raise exception
+        CPRynner().upload(run)
 
     def download( self, run ):
-        try:
-            self.rynner.download(run)
-        except FileCopyException as exception:
-            self.rynner = None
-            raise exception
+        CPRynner().download(run)
 
     def submit( self, run ):
-        try:
-            self.rynner.submit(run)
-        except FileCopyException as exception:
-            self.rynner = None
-            raise exception
+        CPRynner().submit(run)
 
     def get_runs( self ):
-        try:
-            return self.rynner.get_runs()
-        except FileCopyException as exception:
-            self.rynner = None
-            raise exception
+        return CPRynner().get_runs()
 
     def update( self, runs ):
-        try:
-            self.rynner.update(runs)
-        except FileCopyException as exception:
-            self.rynner = None
-            raise exception
+        CPRynner().update(runs)
 
     def volumetric(self):
         return True
@@ -128,7 +105,7 @@ class RunOnCluster(cpm.Module):
         self.type_first = cellprofiler.setting.Binary(
             text="Image type first",
             value=True,
-            doc= "Whether the images are ordered by image type first. If not, ordering by measurement first is assumed."
+            doc= "Wether the images are ordered by image type first. If not, ordering by measurement first is assumed."
         )
         self.batch_mode = cps.Binary("Hidden: in batch mode", False)
         self.revision = cps.Integer("Hidden: revision number", 0)
@@ -181,8 +158,7 @@ class RunOnCluster(cpm.Module):
         if self.batch_mode.value:
             return True
         else:
-            if self.rynner is None:
-                self.create_rynner()
+            rynner = CPRynner()
 
             # save the pipeline
             path = self.save_pipeline(workspace)
@@ -208,7 +184,7 @@ class RunOnCluster(cpm.Module):
             downloads = [ [f"run{f}",output_dir] for f in range(0,n_measurements)]
 
             # Define the job to run
-            run = self.rynner.create_run( 
+            run = rynner.create_run( 
                 jobname = self.runname.value.replace(' ','_'),
                 script = f'module load java; printf %s\\\\n {{0..{n_measurements-1}}} | xargs -P 40 -n 1 -IX bash -c "cd runX ; cellprofiler -c -p ../Batch_data.h5 -o results -i images -f 1 -l {measurements_per_run} 2>>../cellprofiler_output ";',
                 uploads = uploads,

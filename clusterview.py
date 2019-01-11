@@ -49,8 +49,7 @@ class ClusterviewFrame(wx.Frame):
     def __init__(self, parent, title):
         super(ClusterviewFrame, self).__init__(parent, title=title, size = (250,400))
 
-        self.rynner = None
-        self.check_cluster()
+        self.update()
         self.InitUI()
         self.Centre()
 
@@ -125,32 +124,16 @@ class ClusterviewFrame(wx.Frame):
         self.FitInside()
 
     def on_logout_click( self, event ):
-        self.rynner.provider.channel.close()
-        self.rynner = None
+        CPRynner().provider.channel.close()
 
     def get_runs( self ):
-        try:
-            return self.rynner.get_runs()
-        except FileCopyException as exception:
-            self.rynner = None
-            raise exception
+        return CPRynner().get_runs()
 
     def update( self ):
-        if self.rynner is None:
-            self.rynner = CPRynner()
         self.runs = [ r for r in self.get_runs() if 'upload_time' in r ]
-        self.rynner.update(self.runs)
-
-    def check_cluster( self ):
-        '''Get all runs from the cluster and list in the UI'''
-        if self.rynner is None:
-            self.rynner = CPRynner()
-        self.update()
+        CPRynner().update(self.runs)
 
     def download( self, run ):
-        if self.rynner is None:
-            self.rynner = CPRynner()
-
         default_target = cpprefs.get_default_output_directory()
         dialog = wx.DirDialog (None, "Choose an output directory", default_target,
                     wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
@@ -164,16 +147,11 @@ class ClusterviewFrame(wx.Frame):
         finally:
             dialog.Destroy()
 
-        try:
-            tmpdir = tempfile.mkdtemp()
-            # Define the job to run
-            run.downloads = [ [d[0], tmpdir] for d in run.downloads ]
-            self.rynner.download(run)
+        tmpdir = tempfile.mkdtemp()
+        # Define the job to run
+        run.downloads = [ [d[0], tmpdir] for d in run.downloads ]
+        CPRynner().download(run)
             
-        except FileCopyException as exception:
-            self.rynner = None
-            raise exception
-        
         for runfolder, localdir in run.downloads:
             self.handle_result_file( 
                 os.path.join(localdir, runfolder, 'results'),
