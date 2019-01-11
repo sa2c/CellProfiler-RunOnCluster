@@ -229,7 +229,7 @@ class ClusterviewFrame(wx.Frame):
         # Read the source file and write row by row to the destination
         infile = open(source, 'rb')
         infile.next()
-        outfile = open(destination,"a")
+        outfile = open(destination,"ab")
         for row in infile:
             # If the image number is included, correct the number
             if has_image_num:
