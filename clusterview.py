@@ -125,6 +125,11 @@ class ClusterviewFrame(wx.Frame):
 
     def on_logout_click( self, event ):
         CPRynner.logout()
+        self.runs = []
+        self.vbox.Clear(True)
+        self.build_view(self.vbox)
+        self.vbox.Layout() 
+        self.FitInside()
 
     def update( self ):
         rynner = CPRynner.CPRynner()
