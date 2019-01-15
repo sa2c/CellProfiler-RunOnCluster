@@ -17,21 +17,18 @@ YES          YES          NO
 
 """
 
+import six
 import logging
 
 logger = logging.getLogger(__package__)
 
 import numpy as np
-import six
 import os, shutil
-import csv
 
 import cellprofiler.module as cpm
 import cellprofiler.measurement as cpmeas
 import cellprofiler.setting as cps
 import cellprofiler.preferences as cpprefs
-from cellprofiler.setting import YES, NO
-from cellprofiler.measurement import R_PARENT, R_CHILD
 
 from libsubmit import SSHChannel
 from libsubmit.providers.slurm.slurm import SlurmProvider
@@ -48,7 +45,10 @@ class ClusterviewFrame(wx.Frame):
 
     def __init__(self, parent, title):
         super(ClusterviewFrame, self).__init__(parent, title=title, size = (250,400))
-
+        import sys
+        print sys.executable
+        import os
+        print(os.__file__)
         self.update()
         self.InitUI()
         self.Centre()
@@ -229,19 +229,27 @@ class ClusterviewFrame(wx.Frame):
         infile.close()
                 
 
-
 class clusterView(cpm.Module):
     module_name = "ClusterView"
     category = "Data Tools"
-    variable_revision_number = 2
+    variable_revision_number = 1
+
+    @classmethod
+    def is_input_module(cls):
+        ''' This is a rather horrible hack...
+            Prevents CellProfiler from listing this in the add module window.
+        '''
+        return True
 
     def create_settings(self):
-        pass   
+        self.pipelineinfo = cps.HTMLText( 
+            "",
+            "Use the 'Data Tools' menu to open the Cluster View",
+            size=(2,2)
+        )
 
     def settings(self):
-        result = []
-
-        return result
+        return [self.pipelineinfo]
 
     def post_pipeline_load(self, pipeline):
         '''Fixup any measurement names that might have been ambiguously loaded
@@ -251,9 +259,7 @@ class clusterView(cpm.Module):
         pass
 
     def visible_settings(self):
-        result = []
-
-        return result
+        return [self.pipelineinfo]
 
     def run(self):
         pass

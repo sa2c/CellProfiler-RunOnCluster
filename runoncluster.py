@@ -19,8 +19,6 @@ YES          YES          NO
 ============ ============ ===============
 """
 
-
-
 import logging
 logger = logging.getLogger(__name__)
 import numpy as np
@@ -38,7 +36,6 @@ import cellprofiler.module as cpm
 import cellprofiler.measurement as cpmeas
 import cellprofiler.pipeline as cpp
 import cellprofiler.setting as cps
-from cellprofiler.setting import YES, NO
 import cellprofiler.preferences as cpprefs
 import cellprofiler.workspace as cpw
 
@@ -70,6 +67,9 @@ class RunOnCluster(cpm.Module):
     runs = []
 
     rynner = None
+
+    def is_create_batch_module(self):
+        return True
 
     def upload( self, run ):
         CPRynner().upload(run)
