@@ -77,6 +77,16 @@ class ClusterviewFrame(wx.Frame):
         hbox.Add(btn, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 8)
         btn.Bind(wx.EVT_BUTTON, self.on_update_click )
 
+        update_time_text = wx.StaticText(self.panel, label="")
+        update_time_text.SetFont(font)
+        self.set_timer(update_time_text)
+        
+        hbox.Add(update_time_text, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 8)
+        vbox.Add(hbox, 0, wx.EXPAND, 10)
+
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        hbox.Add((0,0), 1, wx.ALIGN_CENTER_VERTICAL)
+        
         btn = wx.Button(self.panel, label='Logout', size=(90, 30))
         btn.Bind(wx.EVT_BUTTON, self.on_logout_click )
         hbox.Add(btn, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 8)
@@ -111,6 +121,17 @@ class ClusterviewFrame(wx.Frame):
             btn.Bind(wx.EVT_BUTTON, lambda e, r=run: self.on_download_click( e, r ) )
             hbox3.Add(btn)
             vbox.Add(hbox3, flag=wx.ALIGN_RIGHT|wx.RIGHT, border=10)
+
+    def set_timer(self, element):
+        self.timer = wx.Timer(self)
+        def update_st(event):
+            element.SetLabel("Last updated: "+timeago.format(self.update_time, locale='en_GB'))
+        def close(event):
+            self.timer.Stop()
+            self.Destroy()
+        self.timer.Start(1000)
+        self.Bind(wx.EVT_TIMER, update_st, self.timer)
+        wx.EVT_CLOSE(self, close)
 
     def on_download_click(self, event, run):
         self.download(run)
