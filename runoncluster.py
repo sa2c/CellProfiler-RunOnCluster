@@ -71,8 +71,26 @@ class RunOnCluster(cpm.Module):
     def is_create_batch_module(self):
         return True
 
-    def upload( self, run ):
+    def upload( self, run, dialog = None ):
         CPRynner().upload(run)
+        rynner = CPRynner()
+
+        if dialog == None:
+            dialog = wx.GenericProgressDialog("Uploading","Uploading files")
+            destroy_dialog = True
+        else:
+            destroy_dialog = False
+
+        if rynner is not None:
+            rynner.start_upload(run)
+            maximum = dialog.GetRange()
+            while run['upload_status'] < 1:
+                value = min( maximum, int(maximum*run['upload_status']) )
+                dialog.Update(value)
+                time.sleep(0.1)
+            dialog.Update(maximum-1)
+            if destroy_dialog:
+                dialog.Destroy()
 
     def download( self, run ):
         CPRynner().download(run)
@@ -193,18 +211,27 @@ class RunOnCluster(cpm.Module):
                 )
 
                 # Copy the pipeline and images accross
-                self.upload(run)
+                dialog = wx.GenericProgressDialog("Uploading","Uploading files",style=wx.PD_APP_MODAL)
+                try:
+                    self.upload(run, dialog)
 
                 # Submit the run
+                    dialog.Update( dialog.GetRange()-1, "Submitting" )
                 self.submit(run)
 
                 # Store submission data
                 self.runs += [run]
 
+                    dialog.Destroy()
                 wx.MessageBox(
                     "RunOnCluster submitted the run to the cluster",
                     caption="RunOnCluster: Batch job submitted",
                     style=wx.OK | wx.ICON_INFORMATION)
+                except Exception as e:
+                    dialog.Destroy()
+                    raise e
+
+
             return False
 
     def run(self, workspace):
