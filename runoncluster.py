@@ -125,6 +125,11 @@ class RunOnCluster(cpm.Module):
             value=True,
             doc= "Wether the images are ordered by image type first. If not, ordering by measurement first is assumed."
         )
+        self.max_walltime = cellprofiler.setting.Integer(
+            "Maximum Runtime (hours)",
+            24,
+            doc = "The maximum time for reserving a node on the cluster. Should be higher than the actual runtime, or the run may not compelte. Runs with lower values will pass the queue more quickly."
+        )
         self.batch_mode = cps.Binary("Hidden: in batch mode", False)
         self.revision = cps.Integer("Hidden: revision number", 0)
 
@@ -133,6 +138,7 @@ class RunOnCluster(cpm.Module):
             self.runname,
             self.n_images_per_measurement,
             self.type_first,
+            self.max_walltime,
             self.batch_mode,
             self.revision,
         ]
@@ -146,6 +152,7 @@ class RunOnCluster(cpm.Module):
             self.runname,
             self.n_images_per_measurement,
             self.type_first,
+            self.max_walltime,
         ]
         return result
 
@@ -154,6 +161,7 @@ class RunOnCluster(cpm.Module):
             self.runname,
             self.n_images_per_measurement,
             self.type_first,
+            self.max_walltime,
         ]
 
         return help_settings
@@ -178,6 +186,9 @@ class RunOnCluster(cpm.Module):
         else:
             rynner = CPRynner()
             if rynner is not None:
+
+                # Set walltime
+                rynner.provider.walltime = str(self.max_walltime.value)+":00:00"
 
                 # save the pipeline
                 path = self.save_pipeline(workspace)

@@ -100,7 +100,7 @@ def _create_rynner():
             script_dir=tmpdir,
             nodes_per_block=1,
             tasks_per_node=40,
-            walltime="00:01:00",
+            walltime="01:00:00",
             init_blocks=1,
             max_blocks=1,
             launcher = SimpleLauncher(),
