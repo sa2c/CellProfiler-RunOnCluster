@@ -109,7 +109,7 @@ class ClusterviewFrame(wx.Frame):
             vbox.Add((-1, 5))
 
             hbox2 = wx.BoxSizer(wx.HORIZONTAL)
-            st2 = wx.StaticText(self.panel, label=run.status)
+            st2 = wx.StaticText(self.panel, label=run.status+" since "+str(datetime.datetime.fromtimestamp(int(run['status_time']))))
             st2.SetFont(font)
             hbox2.Add(st2)
             vbox.Add(hbox2, flag=wx.LEFT | wx.TOP, border=10)
