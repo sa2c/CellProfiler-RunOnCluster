@@ -45,14 +45,15 @@ import wx
 class ClusterviewFrame(wx.Frame):
 
     def __init__(self, parent, title):
-        super(ClusterviewFrame, self).__init__(parent, title=title, size = (250,400))
+        super(ClusterviewFrame, self).__init__(parent, title=title, size = (400,400))
+        self.update_time = datetime.datetime.now()
         self.update()
         self.InitUI()
         self.Centre()
 
     def InitUI(self):
 
-        self.panel = wx.lib.scrolledpanel.ScrolledPanel(self, size = (250,400))
+        self.panel = wx.lib.scrolledpanel.ScrolledPanel(self)
 
         self.panel.SetBackgroundColour('#ededed')
         self.vbox = wx.BoxSizer(wx.VERTICAL)
@@ -71,20 +72,21 @@ class ClusterviewFrame(wx.Frame):
         vbox.Add((-1, 5))
 
         hbox = wx.BoxSizer(wx.HORIZONTAL)
+
         btn = wx.Button(self.panel, label='Update', size=(90, 30))
-        hbox.Add(btn)
+        hbox.Add(btn, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 8)
         btn.Bind(wx.EVT_BUTTON, self.on_update_click )
 
         btn = wx.Button(self.panel, label='Logout', size=(90, 30))
-        hbox.Add(btn)
         btn.Bind(wx.EVT_BUTTON, self.on_logout_click )
+        hbox.Add(btn, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 8)
 
-        vbox.Add(hbox, flag=wx.ALIGN_LEFT|wx.LEFT, border=10)
+        vbox.Add(hbox, 0, wx.EXPAND, 10)
 
         vbox.Add((-1, 5))
 
         line = wx.StaticLine(self.panel)
-        vbox.Add(line, flag=wx.EXPAND|wx.BOTTOM, border=10)
+        vbox.Add(line, 0, wx.EXPAND, 10)
 
         self.run_displays = []
         for run in sorted(self.runs, key=lambda k: k['upload_time'], reverse = True):
