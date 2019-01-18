@@ -45,10 +45,6 @@ class ClusterviewFrame(wx.Frame):
 
     def __init__(self, parent, title):
         super(ClusterviewFrame, self).__init__(parent, title=title, size = (250,400))
-        import sys
-        print sys.executable
-        import os
-        print(os.__file__)
         self.update()
         self.InitUI()
         self.Centre()
