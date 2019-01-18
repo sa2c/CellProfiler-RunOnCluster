@@ -24,6 +24,7 @@ logger = logging.getLogger(__package__)
 
 import numpy as np
 import os, shutil
+import time
 
 import cellprofiler.module as cpm
 import cellprofiler.measurement as cpmeas
@@ -155,7 +156,14 @@ class ClusterviewFrame(wx.Frame):
 
         rynner = CPRynner.CPRynner()
         if rynner is not None:
-            rynner.download(run)
+            rynner.start_download(run)
+            dialog = wx.GenericProgressDialog("downloading","Downloading files")
+            maximum = dialog.GetRange()
+            while run['download_status'] < 1:
+                value = min( maximum, int(maximum*run['download_status']) )
+                dialog.Update(value)
+                time.sleep(0.04)
+            dialog.Destroy()
             
         for runfolder, localdir in run.downloads:
             self.handle_result_file( 
