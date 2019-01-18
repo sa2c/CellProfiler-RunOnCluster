@@ -36,6 +36,7 @@ from libsubmit.providers.slurm.slurm import SlurmProvider
 from libsubmit.launchers.launchers import SimpleLauncher
 from libsubmit.channels.errors import SSHException, FileCopyException
 import tempfile
+import timeago, datetime
 
 import CPRynner.CPRynner as CPRynner
 
@@ -117,7 +118,11 @@ class ClusterviewFrame(wx.Frame):
             vbox.Add((-1, 5))
 
             hbox3 = wx.BoxSizer(wx.HORIZONTAL)
-            btn = wx.Button(self.panel, label='Download Results', size=(110, 30))
+            if hasattr(run, 'downloaded') and run.downloads:
+                label = 'Download Again'
+            else:
+                label = 'Download Results'
+            btn = wx.Button(self.panel, label=label, size=(110, 30))
             btn.Bind(wx.EVT_BUTTON, lambda e, r=run: self.on_download_click( e, r ) )
             hbox3.Add(btn)
             vbox.Add(hbox3, flag=wx.ALIGN_RIGHT|wx.RIGHT, border=10)
@@ -140,7 +145,7 @@ class ClusterviewFrame(wx.Frame):
         self.update()
         self.vbox.Clear(True)
         self.build_view(self.vbox)
-        self.vbox.Layout() 
+        self.vbox.Layout()
         self.FitInside()
 
     def on_logout_click( self, event ):
@@ -148,7 +153,7 @@ class ClusterviewFrame(wx.Frame):
         self.runs = []
         self.vbox.Clear(True)
         self.build_view(self.vbox)
-        self.vbox.Layout() 
+        self.vbox.Layout()
         self.FitInside()
 
     def update( self ):
@@ -156,6 +161,9 @@ class ClusterviewFrame(wx.Frame):
         if rynner is not None:
             self.runs = [ r for r in rynner.get_runs() if 'upload_time' in r ]
             rynner.update(self.runs)
+            for run in self.runs:
+                run['status_time'] = rynner.read_time(run)
+            self.update_time = datetime.datetime.now()
         else:
             self.runs = []
 
@@ -174,7 +182,6 @@ class ClusterviewFrame(wx.Frame):
             dialog.Destroy()
 
         tmpdir = tempfile.mkdtemp()
-        # Define the job to run
         run.downloads = [ [d[0], tmpdir] for d in run.downloads ]
 
         rynner = CPRynner.CPRynner()
@@ -193,6 +200,12 @@ class ClusterviewFrame(wx.Frame):
                 os.path.join(localdir, runfolder, 'results'),
                 target_directory
             )
+
+        # Set a flag marking the run downloaded
+        run['downloaded'] = True
+        rynner.save_run_config( run )
+
+        self.update()
     
     def handle_result_file( self, filename, target_directory ):
         if os.path.isdir(filename):
