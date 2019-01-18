@@ -226,9 +226,10 @@ class Rynner(object):
 
         # submit run
 
-        submit_script = f'cd {run.remote_dir.as_posix()}; \
-{self._record_time("start", run)}; \
+        submit_script = f'{self._record_time("start", run)}; \
+cd {run.remote_dir.as_posix()}; \
 ./{runscript_name}; \
+cd ; \
 {self._record_time("end", run)}'
 
         run['qid'] = self.provider.submit(submit_script, 1)
@@ -262,6 +263,20 @@ class Rynner(object):
         ]
 
         return needs_update, status
+
+    def read_time(self, run):
+
+        filename = 'rynner.times'
+        filepath = run.remote_dir.joinpath( filename ).as_posix()
+
+        sftp_client = self.provider.channel.sftp_client
+        try:
+            with sftp_client.open(filepath, "r") as f:
+                lines = f.read().splitlines()
+                last_line = lines[-1]
+                return last_line.split(' ')[1]
+        except:
+            return None
 
     def update(self, runs):
         '''
