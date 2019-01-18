@@ -190,22 +190,34 @@ class RunOnCluster(cpm.Module):
                 n_runs = 40
                 n_measurements = int(len(file_list)/self.n_images_per_measurement.value)
                 measurements_per_run = int(n_measurements/n_runs) + 1
-                image_groups = self.group_images( file_list, n_measurements, measurements_per_run, self.type_first.value)
+                grouped_images = self.group_images( file_list, n_measurements, measurements_per_run, self.type_first.value)
+                n_image_groups = max(zip(*grouped_images)[0]) + 1
 
                 # Add image files to uploads
-                uploads = [[name, f'run{str(g)}/images'] for g,name in image_groups]
+                uploads = [[name, f'run{str(g)}/images'] for g,name in grouped_images]
 
                 # Also add the pipeline
                 uploads +=  [[path,'.']]
 
                 # The runs are downloaded in their separate folders. They can be processed later
                 output_dir = cpprefs.get_default_output_directory()
-                downloads = [ [f"run{f}",output_dir] for f in range(0,n_measurements)]
+                downloads = [[f'run{str(g)}',output_dir] for g in range(n_image_groups)]
+
+                # Create run scripts and add to uploads
+                for g in range(n_image_groups):
+                    runscript_name = f'cellprofiler_run{g}'
+                    local_script_path = os.path.join(rynner.provider.script_dir, runscript_name)
+
+                    with open(local_script_path, "w") as file:
+                        n_measurements = len([ i for i in grouped_images if i[0]==g ]) / self.n_images_per_measurement.value
+                        file.write(f"cellprofiler -c -p ../Batch_data.h5 -o results -i images -f 1 -l {n_measurements} 2>>../cellprofiler_output")
+
+                    uploads += [[local_script_path,f"run{g}"]]
 
                 # Define the job to run
                 run = rynner.create_run( 
                     jobname = self.runname.value.replace(' ','_'),
-                    script = f'module load java; printf %s\\\\n {{0..{n_measurements-1}}} | xargs -P 40 -n 1 -IX bash -c "cd runX ; cellprofiler -c -p ../Batch_data.h5 -o results -i images -f 1 -l {measurements_per_run} 2>>../cellprofiler_output ";',
+                    script = f'module load java; printf %s\\\\n {{0..{n_image_groups-1}}} | xargs -P 40 -n 1 -IX bash -c "cd runX ; ./cellprofiler_runX; ";',
                     uploads = uploads,
                     downloads =  downloads,
                 )
@@ -215,15 +227,15 @@ class RunOnCluster(cpm.Module):
                 try:
                     self.upload(run, dialog)
 
-                # Submit the run
+                    # Submit the run
                     dialog.Update( dialog.GetRange()-1, "Submitting" )
-                self.submit(run)
+                    self.submit(run)
 
-                # Store submission data
-                self.runs += [run]
+                    # Store submission data
+                    self.runs += [run]
 
                     dialog.Destroy()
-                wx.MessageBox(
+                    wx.MessageBox(
                     "RunOnCluster submitted the run to the cluster",
                     caption="RunOnCluster: Batch job submitted",
                     style=wx.OK | wx.ICON_INFORMATION)
