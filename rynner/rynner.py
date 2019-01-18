@@ -4,11 +4,11 @@ import os
 import pickle
 from box import Box
 from stat import S_ISDIR
-import tempfile
 import time
 
 from future import *
 from pathlib import Path, PurePosixPath
+import threading, queue
 
 class Rynner(object):
 
@@ -74,6 +74,54 @@ class Rynner(object):
 
         return src, dest
 
+    def list_local_files(self, run, local_source, remote_dir):
+        '''
+        Build a list of files a remote folder
+        '''
+        expanded_uploads = []
+
+        try:
+            if os.path.isdir(local_source):
+                _, directory_name = os.path.split(local_source)
+                dest = remote_dir + '/' + directory_name
+                
+                file_list = os.listdir(directory_name)
+                for filename in file_list:
+                    src = os.path.join(local_source, filename)
+                    expanded_uploads += self.list_remote_files( run, src, dest )
+            else:
+                expanded_uploads = [ [local_source, remote_dir] ]
+        except Exception as e:
+            print(e)
+            print("No such file")
+        return expanded_uploads
+    
+    def start_upload(self, run):
+        '''
+        Spawn a thread to upload the files in the upload list.
+        Update a report of the current state of the process.
+        '''
+        uploads = []
+        for upload in run['uploads']:
+            uploads +=  self.list_local_files( run, upload[0], upload[1] )
+
+        def upload_thread(run):
+            '''
+            The function executed by the download thread
+            '''
+            run_copy = run.copy()
+            for i, upload in enumerate(uploads):
+                run['upload_status'] = (float(i)/len(uploads))
+                run_copy['uploads'] = [upload]
+                self.upload( run_copy )
+                
+            run['upload_status'] = 1.0
+            return
+        
+        run['upload_status'] = 0
+        thread = threading.Thread( target=upload_thread, args=(run,) )
+        thread.start()
+
     def upload(self, run):
         '''
         Uploads files using provider channel.
@@ -83,13 +131,62 @@ class Rynner(object):
 
         for upload in uploads:
             src, dest = self._parse_path(upload)
-            print(f'Uploading {src} to {dest}')
             dest = run.remote_dir.joinpath( dest ).as_posix()
 
             self.provider.channel.push_directory(src, dest)
-        
+
         run['upload_time'] = time.time()
-        self.save_run_config( run )
+
+    def list_remote_files(self, run, remote_source, local_dir):
+        '''
+        Build a list of files a remote folder
+        '''
+        expanded_downloads = []
+        sftp_client = self.provider.channel.sftp_client
+        src = run.remote_dir.joinpath( remote_source ).as_posix()
+
+        try:
+            if S_ISDIR( sftp_client.stat(src).st_mode ):
+                _, directory_name = os.path.split(src)
+                dest = os.path.join(local_dir, directory_name)
+                
+                file_list = sftp_client.listdir(path=src)
+                for filename in file_list:
+                    src = remote_source + '/' + filename
+                    expanded_downloads += self.list_remote_files( run, src, dest )
+            else:
+                expanded_downloads = [ [remote_source, local_dir] ]
+        except Exception as e:
+            print(e)
+            print(src)
+            print("No such file")
+        return expanded_downloads
+    
+    def start_download(self, run):
+        '''
+        Spawn a thread to download the files in the download list.
+        Update a report of the current state of the process.
+        '''
+        downloads = []
+        for download in run['downloads']:
+            downloads +=  self.list_remote_files( run, download[0], download[1] )
+
+        def download_thread(run):
+            '''
+            The function executed by the download thread
+            '''
+            run_copy = run.copy()
+            for i, download in enumerate(downloads):
+                run['download_status'] = (float(i)/len(downloads))
+                run_copy['downloads'] = [download]
+                self.download( run_copy )
+                
+            run['download_status'] = 1.0
+            return
+        
+        run['download_status'] = 0
+        thread = threading.Thread( target=download_thread, args=(run,) )
+        thread.start()
 
     def download(self, run):
         '''
@@ -101,8 +198,6 @@ class Rynner(object):
         for download in downloads:
             src, dest = self._parse_path(download)
             src = run.remote_dir.joinpath( src ).as_posix()
-
-            print(f'Downloading {src} to {dest}')
 
             # Libsubmit will refuse to overwrite an existing file.
             # We want overwriting as default behaviour and remove
@@ -123,7 +218,6 @@ class Rynner(object):
         with open(local_script_path, "w") as file:
             file.write(run['script'])
 
-        print(local_script_path, run.remote_dir.as_posix())
         self.provider.channel.push_file(local_script_path, run.remote_dir.as_posix())
 
         # record submission times on remote
@@ -137,9 +231,7 @@ class Rynner(object):
 ./{runscript_name}; \
 {self._record_time("end", run)}'
 
-        print('Submitting run')
         run['qid'] = self.provider.submit(submit_script, 1)
-        print(f'Run submitted with queue id {run["qid"]}')
         run['status'] = Rynner.StatusPending
 
         self.save_run_config( run )
@@ -254,4 +346,5 @@ class Rynner(object):
                                 pass
                             
         return runs
-
+                        
+                
