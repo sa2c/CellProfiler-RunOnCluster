@@ -25,18 +25,13 @@ logger = logging.getLogger(__package__)
 import numpy as np
 import os, shutil
 import time
+import tempfile
+import timeago, datetime
 
 import cellprofiler.module as cpm
 import cellprofiler.measurement as cpmeas
 import cellprofiler.setting as cps
 import cellprofiler.preferences as cpprefs
-
-from libsubmit import SSHChannel
-from libsubmit.providers.slurm.slurm import SlurmProvider
-from libsubmit.launchers.launchers import SimpleLauncher
-from libsubmit.channels.errors import SSHException, FileCopyException
-import tempfile
-import timeago, datetime
 
 import CPRynner.CPRynner as CPRynner
 

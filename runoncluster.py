@@ -41,12 +41,6 @@ import cellprofiler.workspace as cpw
 
 from cellprofiler.measurement import F_BATCH_DATA, F_BATCH_DATA_H5
 
-from rynner.rynner import Rynner
-from libsubmit import SSHChannel
-from libsubmit.providers.slurm.slurm import SlurmProvider
-from libsubmit.launchers.launchers import SimpleLauncher
-from libsubmit.channels.errors import SSHException, FileCopyException
-
 from CPRynner.CPRynner import CPRynner
 import tempfile
 
@@ -66,14 +60,12 @@ class RunOnCluster(cpm.Module):
     variable_revision_number = 8
     runs = []
 
-    rynner = None
-
     def is_create_batch_module(self):
         return True
 
     def upload( self, run, dialog = None ):
-        CPRynner().upload(run)
         rynner = CPRynner()
+        rynner.upload(run)
 
         if dialog == None:
             dialog = wx.GenericProgressDialog("Uploading","Uploading files")
@@ -87,22 +79,10 @@ class RunOnCluster(cpm.Module):
             while run['upload_status'] < 1:
                 value = min( maximum, int(maximum*run['upload_status']) )
                 dialog.Update(value)
-                time.sleep(0.1)
+                time.sleep(0.04)
             dialog.Update(maximum-1)
             if destroy_dialog:
                 dialog.Destroy()
-
-    def download( self, run ):
-        CPRynner().download(run)
-
-    def submit( self, run ):
-        CPRynner().submit(run)
-
-    def get_runs( self ):
-        return CPRynner().get_runs()
-
-    def update( self, runs ):
-        CPRynner().update(runs)
 
     def volumetric(self):
         return True
@@ -240,7 +220,7 @@ class RunOnCluster(cpm.Module):
 
                     # Submit the run
                     dialog.Update( dialog.GetRange()-1, "Submitting" )
-                    self.submit(run)
+                    CPRynner().submit(run)
 
                     # Store submission data
                     self.runs += [run]
