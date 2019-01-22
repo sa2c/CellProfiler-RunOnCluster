@@ -42,7 +42,49 @@ import CPRynner.CPRynner as CPRynner
 
 import wx
 
+
+class YesToAllMessageDialog(wx.Dialog):
+    def __init__(self, parent, message, title):
+        super(YesToAllMessageDialog, self).__init__(parent, title=title, size = (310,160) )
+
+        self.panel = wx.Panel(self)
+        
+        text_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        stmessage = wx.StaticText(self.panel, 11, message)
+        stmessage.Wrap(300)
+        text_sizer.Add(stmessage, 0, wx.ALL , 5)
+
+        button_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.yes_btn = wx.Button(self.panel, wx.ID_YES, label="Yes", size=(60, 30))
+        button_sizer.Add(self.yes_btn, 0, wx.ALL , 5)
+        self.no_btn = wx.Button(self.panel, wx.ID_NO, label="No", size=(60, 30))
+        button_sizer.Add(self.no_btn, 0, wx.ALL , 5)
+        self.yestoall_btn = wx.Button(self.panel, wx.ID_YESTOALL, label="Yes to All", size=(60, 30))
+        button_sizer.Add(self.yestoall_btn, 0, wx.ALL , 5)
+
+        self.yes_btn.Bind(wx.EVT_BUTTON, self.on_yes)
+        self.no_btn.Bind(wx.EVT_BUTTON, self.on_no)
+        self.yestoall_btn.Bind(wx.EVT_BUTTON, self.on_yes_to_all)
+
+        main_sizer = wx.BoxSizer(wx.VERTICAL)
+        main_sizer.Add(text_sizer, 0, wx.ALL, 5)
+        main_sizer.Add(button_sizer, 0, wx.ALL | wx.ALIGN_CENTER, 5)
+        self.panel.SetSizer(main_sizer)
+        self.panel.Fit()
     
+    def on_yes(self, event):
+        self.SetReturnCode(wx.ID_YES)
+        self.Destroy()
+
+    def on_no(self, event):
+        self.SetReturnCode(wx.ID_NO)
+        self.Destroy()
+
+    def on_yes_to_all(self, event):
+        self.SetReturnCode(wx.ID_YESTOALL)
+        self.Destroy()
+
+
 class ClusterviewFrame(wx.Frame):
 
     def __init__(self, parent, title):
@@ -118,7 +160,7 @@ class ClusterviewFrame(wx.Frame):
             vbox.Add((-1, 5))
 
             hbox3 = wx.BoxSizer(wx.HORIZONTAL)
-            if hasattr(run, 'downloaded') and run.downloads:
+            if hasattr(run, 'downloaded') and run.downloaded:
                 label = 'Download Again'
             else:
                 label = 'Download Results'
@@ -195,10 +237,14 @@ class ClusterviewFrame(wx.Frame):
                 time.sleep(0.04)
             dialog.Destroy()
             
+        self.csv_dict = {}
+        self.yes_to_all_clicked = False
+        has_been_downloaded = hasattr(run, 'downloaded') and run.downloaded
         for runfolder, localdir in run.downloads:
             self.handle_result_file( 
                 os.path.join(localdir, runfolder, 'results'),
-                target_directory
+                target_directory,
+                has_been_downloaded
             )
 
         # Set a flag marking the run downloaded
@@ -206,36 +252,74 @@ class ClusterviewFrame(wx.Frame):
         rynner.save_run_config( run )
 
         self.update()
+
+    def rename_file(self, name):
+        '''
+        Add a number at the end of a filename to create a unique new name
+        '''
+        stripped_name, suffix = os.path.splitext(name)
+        n=2
+        new_name = stripped_name + '_' +str(n)+suffix
+        while os.path.isfile(new_name):
+            n += 1
+            new_name = stripped_name + '_' +str(n)+suffix
+        return new_name
     
-    def handle_result_file( self, filename, target_directory ):
+    def handle_result_file( self, filename, target_directory, has_been_downloaded ):
         if os.path.isdir(filename):
             for f in os.listdir(filename):
-                self.handle_result_file( os.path.join(filename, f), target_directory)
+                self.handle_result_file( os.path.join(filename, f), target_directory, has_been_downloaded)
         else:
+            name = os.path.basename(filename)
+            target_file = os.path.join(target_directory, name)
             try:
-                name = os.path.basename(filename)
-                target_file = os.path.join(target_directory, name)
                 if not os.path.isfile(target_file):
+                    # File does not exist
                     shutil.move( filename, target_directory )
-                elif filename.endswith('.csv'):
-                    self.handle_csv( filename, target_file )
+                    if filename.endswith('.csv'):
+                        self.csv_dict[name] = name
+                elif name.endswith('.csv'):
+                    # File exists and is csv
+                    append = False
+                    if name not in self.csv_dict:
+                        if not self.yes_to_all_clicked:
+                            if has_been_downloaded:
+                                dialog = YesToAllMessageDialog(self, 'The file '+name+' already exists. Append to the existing file? This file has already been downloaded and appending may result in dublication of data.', 'Append to File')
+                            else:
+                                dialog = YesToAllMessageDialog(self, 'The file '+name+' already exists. Append to the existing file?', 'Append to File')
+                            answer = dialog.ShowModal()
+                            if answer == wx.ID_YES:
+                                append = True
+                            if answer == wx.ID_YESTOALL:
+                                append = True
+                                self.yes_to_all_clicked = True
+                        else:
+                            append = True
+    
+                        if append:
+                            self.csv_dict[name] = name
+                            self.handle_csv( filename, os.path.join(target_directory, name) )
+                        else:
+                            self.csv_dict[name] = self.rename_file(name)
+                            shutil.move( filename, os.path.join(target_directory, self.csv_dict[name]))
+                    else:
+                        self.handle_csv( filename, os.path.join(target_directory, self.csv_dict[name]))
                 else:
-                    stripped_name, suffix = os.path.splitext(name)
-                    n=2
-                    new_name = stripped_name + '_' +str(n)+suffix
-                    while os.path.isfile(new_name):
-                        n += 1
-                        new_name = stripped_name + '_' +str(n)+suffix
-                    shutil.move( filename,  os.path.join(target_directory, new_name))
+                    # File exists, use a new name
+                    new_name = self.rename_file(name)
+                    shutil.move( filename, os.path.join(target_directory, new_name))
             except Exception as e:
+                print(e)
                 wx.MessageBox(
                     "Failed to move a file to the destination",
                     caption="File error",
                     style=wx.OK | wx.ICON_INFORMATION)
+                raise(e)
 
     def handle_csv( self, source, destination ):
         ''' Write the data rows of a csv file into an existing csv file.
             Fix image numbering before writing '''
+
         # First check if the file contains the image number
         outfile = open(destination,"rb")
         header = outfile.next()
@@ -244,7 +328,7 @@ class ClusterviewFrame(wx.Frame):
             if cell == 'ImageNumber':
                 image_num_cell = index
                 has_image_num = True
-        
+
         # If the image number is included, find the largest value
         if has_image_num:
             last_image_num = 1
