@@ -7,11 +7,18 @@ clusterview and runnoncluster plugins.
 import wx
 from future import *
 
+# Libsubmit creates a .script file in the working directory.
+# To avoid clutter, we run in a temp directory
+import tempfile, os
+workdir = tempfile.mkdtemp()
+os.chdir(workdir)
+print(workdir)
+
 from rynner.rynner import Rynner
 from libsubmit import SSHChannel
 from libsubmit.providers.slurm.slurm import SlurmProvider
 from libsubmit.launchers.launchers import SimpleLauncher
-from libsubmit.channels.errors import SSHException, FileCopyException
+from libsubmit.channels.errors import SSHException
 import tempfile
 
 
