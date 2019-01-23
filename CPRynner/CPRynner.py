@@ -4,7 +4,6 @@ Creates an instance of Rynner to be shared between the
 clusterview and runnoncluster plugins.
 """
 
-import wx
 from future import *
 
 # Libsubmit creates a .script file in the working directory.
@@ -13,12 +12,12 @@ import tempfile, os
 workdir = tempfile.mkdtemp()
 os.chdir(workdir)
 
+import wx
 from rynner.rynner import Rynner
 from libsubmit import SSHChannel
 from libsubmit.providers.slurm.slurm import SlurmProvider
 from libsubmit.launchers.launchers import SimpleLauncher
 from libsubmit.channels.errors import SSHException
-import tempfile
 
 
 class LoginDialog(wx.Dialog):

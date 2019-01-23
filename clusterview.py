@@ -4,7 +4,9 @@
 ClusterView
 =============
 
-
+**Clusterview** displays information about queued and completed runs
+started using Rynner on the cluster and allow downloading result files.
+Expect the folder structure created by the RunOnCluster plugin.
 
 |
 
@@ -17,25 +19,20 @@ YES          YES          NO
 
 """
 
-import six
 import logging
-
 logger = logging.getLogger(__package__)
 
 import numpy as np
-import os, shutil
-import time
+import os, time, shutil
 import tempfile
 import timeago, datetime
+import wx
 
 import cellprofiler.module as cpm
-import cellprofiler.measurement as cpmeas
 import cellprofiler.setting as cps
 import cellprofiler.preferences as cpprefs
 
 import CPRynner.CPRynner as CPRynner
-
-import wx
 
 
 class YesToAllMessageDialog(wx.Dialog):
@@ -370,7 +367,7 @@ class ClusterviewFrame(wx.Frame):
 
         message = 'The file '+name+' already exists. Append to the existing file?'
         if has_been_downloaded:
-            message +=  'This file has already been downloaded and appending may result in dublication of data.'
+            message +=  ' This file has already been downloaded and appending may result in dublication of data.'
             dialog = YesToAllMessageDialog(self, message, 'Append to File')
         else:
             dialog = YesToAllMessageDialog(self, message, 'Append to File')

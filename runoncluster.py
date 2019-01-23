@@ -7,8 +7,14 @@ RunOnCluster
 **RunOnCluster** submits the pipeline and images to run on
 an HPC cluster.
 
-This module submits the pipeline to run on an HPC cluster. It
-should be placed at the end of an image processing pipeline.
+The plugin uses the Rynner library, which in turn uses libsubmit,
+to copy the input files and the pipeline to the cluster. The image
+files are divided into separate run folders for each core, which
+will then be processed independently. The download method in the
+ClusterView plugin automatically combines these back into a single
+result folder.
+
+Should be placed at the end of the image processing pipeline.
 
 |
 
@@ -19,19 +25,14 @@ YES          YES          NO
 ============ ============ ===============
 """
 
+import os, time, re
+from future import *
 import logging
 logger = logging.getLogger(__name__)
 import numpy as np
-import os
-import time
-import re
-import sys
-import zlib
 import wx
-from future import *
 
 import cellprofiler
-import cellprofiler.image as cpi
 import cellprofiler.module as cpm
 import cellprofiler.measurement as cpmeas
 import cellprofiler.pipeline as cpp
@@ -39,15 +40,9 @@ import cellprofiler.setting as cps
 import cellprofiler.preferences as cpprefs
 import cellprofiler.workspace as cpw
 
-from cellprofiler.measurement import F_BATCH_DATA, F_BATCH_DATA_H5
+from cellprofiler.measurement import F_BATCH_DATA_H5
 
 from CPRynner.CPRynner import CPRynner
-import tempfile
-
-'''# of settings aside from the mappings'''
-S_FIXED_COUNT = 8
-'''# of settings per mapping'''
-S_PER_MAPPING = 2
 
 
 class RunOnCluster(cpm.Module):

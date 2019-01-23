@@ -2,13 +2,12 @@
 import uuid
 import os
 import pickle
-from box import Box
 from stat import S_ISDIR
 import time
 
 from future import *
 from pathlib import Path, PurePosixPath
-import threading, queue
+import threading
 
 class Rynner(object):
 
