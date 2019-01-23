@@ -12,7 +12,6 @@ from future import *
 import tempfile, os
 workdir = tempfile.mkdtemp()
 os.chdir(workdir)
-print(workdir)
 
 from rynner.rynner import Rynner
 from libsubmit import SSHChannel
