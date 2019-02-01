@@ -1,4 +1,3 @@
-# -*- coding: future_fstrings -*-
 
 """
 RunOnCluster
@@ -171,6 +170,7 @@ class RunOnCluster(cpm.Module):
                 # Create the run data structure
                 file_list = pipeline.file_list
                 file_list = [name.replace('file:///','') for name in file_list]
+                file_list = [name.replace('file:','') for name in file_list]
 
                 # Divide measurements to up to 40 runs
                 n_runs = 40
@@ -180,30 +180,30 @@ class RunOnCluster(cpm.Module):
                 n_image_groups = max(zip(*grouped_images)[0]) + 1
 
                 # Add image files to uploads
-                uploads = [[name, f'run{str(g)}/images'] for g,name in grouped_images]
+                uploads = [[name, 'run{}/images'.format(g)] for g,name in grouped_images]
 
                 # Also add the pipeline
                 uploads +=  [[path,'.']]
 
                 # The runs are downloaded in their separate folders. They can be processed later
                 output_dir = cpprefs.get_default_output_directory()
-                downloads = [[f'run{str(g)}',output_dir] for g in range(n_image_groups)]
+                downloads = [['run{}'.format(g),output_dir] for g in range(n_image_groups)]
 
                 # Create run scripts and add to uploads
                 for g in range(n_image_groups):
-                    runscript_name = f'cellprofiler_run{g}'
+                    runscript_name = 'cellprofiler_run{}'.format(g)
                     local_script_path = os.path.join(rynner.provider.script_dir, runscript_name)
 
                     with open(local_script_path, "w") as file:
                         n_measurements = len([ i for i in grouped_images if i[0]==g ]) / self.n_images_per_measurement.value
-                        file.write(f"cellprofiler -c -p ../Batch_data.h5 -o results -i images -f 1 -l {n_measurements} 2>>../cellprofiler_output")
+                        file.write("cellprofiler -c -p ../Batch_data.h5 -o results -i images -f 1 -l {} 2>>../cellprofiler_output".format(n_measurements))
 
-                    uploads += [[local_script_path,f"run{g}"]]
+                    uploads += [[local_script_path,"run{}".format(g)]]
 
                 # Define the job to run
                 run = rynner.create_run( 
                     jobname = self.runname.value.replace(' ','_'),
-                    script = f'module load java; printf %s\\\\n {{0..{n_image_groups-1}}} | xargs -P 40 -n 1 -IX bash -c "cd runX ; ./cellprofiler_runX; ";',
+                    script = 'module load java; printf %s\\\\n {{0..{}}} | xargs -P 40 -n 1 -IX bash -c "cd runX ; ./cellprofiler_runX; ";'.format(n_image_groups-1),
                     uploads = uploads,
                     downloads =  downloads,
                 )
