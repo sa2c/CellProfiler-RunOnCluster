@@ -73,17 +73,17 @@ class YesToAllMessageDialog(wx.Dialog):
     
     def on_yes(self, event):
         # On 'yes' button click return wx.ID_YES
-        self.SetReturnCode(wx.ID_YES)
+        self.EndModal(wx.ID_YES)
         self.Destroy()
 
     def on_no(self, event):
         # On 'no' button click return wx.ID_NO
-        self.SetReturnCode(wx.ID_NO)
+        self.EndModal(wx.ID_NO)
         self.Destroy()
 
     def on_yes_to_all(self, event):
         # On 'yes to all' button click return wx.ID_YESTOALL
-        self.SetReturnCode(wx.ID_YESTOALL)
+        self.EndModal(wx.ID_YESTOALL)
         self.Destroy()
 
 
@@ -182,7 +182,7 @@ class ClusterviewFrame(wx.Frame):
                 label = 'Download Again'
             else:
                 label = 'Download Results'
-            btn = wx.Button(self.panel, label=label, size=(110, 30))
+            btn = wx.Button(self.panel, label=label, size=(110, 40))
             btn.Bind(wx.EVT_BUTTON, lambda e, r=run: self.on_download_click( e, r ) )
             hbox3 = wx.BoxSizer(wx.HORIZONTAL)
             hbox3.Add(btn)
