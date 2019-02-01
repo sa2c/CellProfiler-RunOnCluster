@@ -1,4 +1,3 @@
-# -*- coding: future_fstrings -*-
 """
 Creates an instance of Rynner to be shared between the
 clusterview and runnoncluster plugins.
