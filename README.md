@@ -5,7 +5,7 @@ A CellProfiler module for submitting batch jobs to a cluster running slurm.
 ## Installation
 ### Windows and OS X
 
-Precompiled executables are provided in [releases](UPDATE_THIS). These executables require that a Java Runtime Environtems is installed. You can download it for example form the [Java downloads page](https://www.java.com/en/download/). 
+Precompiled executables are provided in [releases](https://github.com/sa2c/CellProfiler-RunOnCluster/releases). These executables require that a Java Runtime Environtems is installed. You can download it for example form the [Java downloads page](https://www.java.com/en/download/). 
 
 ### Source Installation
 
