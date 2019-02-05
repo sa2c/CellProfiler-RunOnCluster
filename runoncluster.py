@@ -203,7 +203,7 @@ class RunOnCluster(cpm.Module):
                 # Define the job to run
                 run = rynner.create_run( 
                     jobname = self.runname.value.replace(' ','_'),
-                    script = 'module load java; printf %s\\\\n {{0..{}}} | xargs -P 40 -n 1 -IX bash -c "cd runX ; ./cellprofiler_runX; ";'.format(n_image_groups-1),
+                    script = 'source /home/s.j.m.o.rantaharju/CellProfiler/bin/activate; module load java; printf %s\\\\n {{0..{}}} | xargs -P 40 -n 1 -IX bash -c "cd runX ; ./cellprofiler_runX; ";'.format(n_image_groups-1),
                     uploads = uploads,
                     downloads =  downloads,
                 )
