@@ -26,7 +26,7 @@ class LoginDialog(wx.Dialog):
  
     def __init__(self, username = ''):
         """Constructor"""
-        super(LoginDialog, self).__init__(None, title="Login", size = (250,180))
+        super(LoginDialog, self).__init__(None, title="Login", size = (300,180))
 
         self.panel = wx.Panel(self)
 
@@ -34,14 +34,14 @@ class LoginDialog(wx.Dialog):
         username_sizer = wx.BoxSizer(wx.HORIZONTAL)
         username_label = wx.StaticText(self.panel, label="Username:")
         username_sizer.Add(username_label, 0, wx.ALL|wx.CENTER, 5)
-        self.username = wx.TextCtrl(self.panel, value = username)
+        self.username = wx.TextCtrl(self.panel, value = username, size=(160, -1))
         username_sizer.Add(self.username, 0, wx.ALL, 5)
  
         # password field
         password_sizer = wx.BoxSizer(wx.HORIZONTAL)
         password_label = wx.StaticText(self.panel, label="Password: ")
         password_sizer.Add(password_label, 0, wx.ALL|wx.CENTER, 5)
-        self.password = wx.TextCtrl(self.panel, style=wx.TE_PASSWORD|wx.TE_PROCESS_ENTER)
+        self.password = wx.TextCtrl(self.panel, size=(160, -1), style=wx.TE_PASSWORD|wx.TE_PROCESS_ENTER)
         password_sizer.Add(self.password, 0, wx.ALL, 5)
  
         # The login and cancel button 

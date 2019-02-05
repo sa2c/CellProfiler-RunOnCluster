@@ -41,13 +41,13 @@ class YesToAllMessageDialog(wx.Dialog):
     wx.ID_YES, wx.ID_NO and wx.ID_YESTOALL respectively
     '''
     def __init__(self, parent, message, title):
-        super(YesToAllMessageDialog, self).__init__(parent, title=title, size = (310,160) )
+        super(YesToAllMessageDialog, self).__init__(parent, title=title, size = (310,210) )
         self.panel = wx.Panel(self)
 
         # First the message text        
         text_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        stmessage = wx.StaticText(self.panel, 11, message)
-        stmessage.Wrap(300)
+        stmessage = wx.StaticText(self.panel, 11, message, size=(310,130))
+        stmessage.Wrap(310)
         text_sizer.Add(stmessage, 0, wx.ALL , 5)
 
         # Three buttons with the appropriate labels
@@ -56,7 +56,7 @@ class YesToAllMessageDialog(wx.Dialog):
         button_sizer.Add(self.yes_btn, 0, wx.ALL , 5)
         self.no_btn = wx.Button(self.panel, wx.ID_NO, label="No", size=(60, 30))
         button_sizer.Add(self.no_btn, 0, wx.ALL , 5)
-        self.yestoall_btn = wx.Button(self.panel, wx.ID_YESTOALL, label="Yes to All", size=(60, 30))
+        self.yestoall_btn = wx.Button(self.panel, wx.ID_YESTOALL, label="Yes to All", size=(90, 30))
         button_sizer.Add(self.yestoall_btn, 0, wx.ALL , 5)
 
         # Bind the buttons to functions
@@ -182,7 +182,7 @@ class ClusterviewFrame(wx.Frame):
                 label = 'Download Again'
             else:
                 label = 'Download Results'
-            btn = wx.Button(self.panel, label=label, size=(110, 40))
+            btn = wx.Button(self.panel, label=label, size=(130, 40))
             btn.Bind(wx.EVT_BUTTON, lambda e, r=run: self.on_download_click( e, r ) )
             hbox3 = wx.BoxSizer(wx.HORIZONTAL)
             hbox3.Add(btn)
