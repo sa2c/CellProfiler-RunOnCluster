@@ -46,8 +46,8 @@ class YesToAllMessageDialog(wx.Dialog):
 
         # First the message text        
         text_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        stmessage = wx.StaticText(self.panel, 11, message, size=(310,130))
-        stmessage.Wrap(310)
+        stmessage = wx.StaticText(self.panel, 11, message, size=(310,110))
+        stmessage.Wrap(300)
         text_sizer.Add(stmessage, 0, wx.ALL , 5)
 
         # Three buttons with the appropriate labels
