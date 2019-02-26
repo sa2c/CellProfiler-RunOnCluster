@@ -172,6 +172,7 @@ class RunOnCluster(cpm.Module):
                 file_list = pipeline.file_list
                 file_list = [name.replace('file:///','') for name in file_list]
                 file_list = [name.replace('file:','') for name in file_list]
+                file_list = [name.replace('%20',' ') for name in file_list]
 
                 if len(file_list) == 0:
                     wx.MessageBox(
