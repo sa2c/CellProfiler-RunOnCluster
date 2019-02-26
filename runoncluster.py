@@ -42,6 +42,7 @@ import cellprofiler.workspace as cpw
 from cellprofiler.measurement import F_BATCH_DATA_H5
 
 from CPRynner.CPRynner import CPRynner
+from CPRynner.CPRynner import max_tasks as CPRynner_max_tasks
 
 
 class RunOnCluster(cpm.Module):
@@ -173,9 +174,8 @@ class RunOnCluster(cpm.Module):
                 file_list = [name.replace('file:','') for name in file_list]
 
                 # Divide measurements to up to 40 runs
-                n_runs = 40
                 n_measurements = int(len(file_list)/self.n_images_per_measurement.value)
-                measurements_per_run = int(n_measurements/n_runs) + 1
+                measurements_per_run = int(n_measurements/CPRynner_max_tasks) + 1
                 grouped_images = self.group_images( file_list, n_measurements, measurements_per_run, self.type_first.value)
                 n_image_groups = max(zip(*grouped_images)[0]) + 1
 
