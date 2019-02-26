@@ -73,7 +73,6 @@ class RunOnCluster(cpm.Module):
             while run['upload_status'] < 1:
                 value = min( maximum, int(maximum*run['upload_status']) )
                 dialog.Update(value)
-                time.sleep(0.04)
             dialog.Update(maximum-1)
             if destroy_dialog:
                 dialog.Destroy()
