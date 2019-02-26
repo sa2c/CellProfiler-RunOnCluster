@@ -92,6 +92,8 @@ def _create_rynner():
     if username is not None:
 
         tmpdir = tempfile.mkdtemp()
+
+        path = '/scratch/'+username+'/CellProfiler/'
     
         provider = SlurmProvider(
             'compute',
@@ -99,7 +101,7 @@ def _create_rynner():
                 hostname='sunbird.swansea.ac.uk',
                 username=username,
                 password=password,
-                script_dir='rynner',
+                script_dir=path,
             ),
             script_dir=tmpdir,
             nodes_per_block=1,
@@ -109,7 +111,7 @@ def _create_rynner():
             max_blocks=1,
             launcher = SimpleLauncher(),
         )
-        return Rynner(provider)
+        return Rynner(provider, path)
     else:
         return None
 
