@@ -53,7 +53,6 @@ class RunOnCluster(cpm.Module):
     module_name = "RunOnCluster"
     category = 'Other'
     variable_revision_number = 8
-    runs = []
 
     def is_create_batch_module(self):
         return True
@@ -221,16 +220,19 @@ class RunOnCluster(cpm.Module):
 
                     # Submit the run
                     dialog.Update( dialog.GetRange()-1, "Submitting" )
-                    CPRynner().submit(run)
-
-                    # Store submission data
-                    self.runs += [run]
-
+                    success = CPRynner().submit(run)
                     dialog.Destroy()
+
+                    if success:
                     wx.MessageBox(
                     "RunOnCluster submitted the run to the cluster",
                     caption="RunOnCluster: Batch job submitted",
                     style=wx.OK | wx.ICON_INFORMATION)
+                    else:
+                        wx.MessageBox(
+                    "RunOnCluster failed to submit the run",
+                        caption="RunOnCluster: Failure",
+                        style=wx.OK | wx.ICON_INFORMATION)
                 except Exception as e:
                     dialog.Destroy()
                     raise e
