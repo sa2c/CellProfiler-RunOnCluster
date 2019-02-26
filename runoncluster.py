@@ -60,7 +60,6 @@ class RunOnCluster(cpm.Module):
 
     def upload( self, run, dialog = None ):
         rynner = CPRynner()
-        rynner.upload(run)
 
         if dialog == None:
             dialog = wx.GenericProgressDialog("Uploading","Uploading files")
