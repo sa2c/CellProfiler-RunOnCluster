@@ -19,6 +19,9 @@ from libsubmit.launchers.launchers import SimpleLauncher
 from libsubmit.channels.errors import SSHException
 
 
+# Default cluster specific settings
+max_tasks = 40
+
 class LoginDialog(wx.Dialog):
     """
     A dialog window asking for a username and a password
