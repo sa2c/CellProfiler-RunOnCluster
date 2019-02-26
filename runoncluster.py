@@ -222,12 +222,12 @@ class RunOnCluster(cpm.Module):
                     dialog.Update( dialog.GetRange()-1, "Submitting" )
                     success = CPRynner().submit(run)
                     dialog.Destroy()
-
+                    
                     if success:
-                    wx.MessageBox(
+                        wx.MessageBox(
                     "RunOnCluster submitted the run to the cluster",
-                    caption="RunOnCluster: Batch job submitted",
-                    style=wx.OK | wx.ICON_INFORMATION)
+                        caption="RunOnCluster: Batch job submitted",
+                        style=wx.OK | wx.ICON_INFORMATION)
                     else:
                         wx.MessageBox(
                     "RunOnCluster failed to submit the run",
@@ -251,6 +251,12 @@ class RunOnCluster(cpm.Module):
             raise cps.ValidationError("The RunOnCluster module must be "
                                       "the last in the pipeline.",
                                       self.wants_default_output_directory)
+        
+        sunbird_max_runtime = 72
+        if self.max_walltime.value > sunbird_max_runtime:
+            raise cps.ValidationError( 
+                "The maximum runtime must be less than "+str(sunbird_max_runtime)+" hours.",
+                self.max_walltime)
 
     def validate_module_warnings(self, pipeline):
         '''Warn user re: Test mode '''
