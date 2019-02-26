@@ -173,6 +173,13 @@ class RunOnCluster(cpm.Module):
                 file_list = [name.replace('file:///','') for name in file_list]
                 file_list = [name.replace('file:','') for name in file_list]
 
+                if len(file_list) == 0:
+                    wx.MessageBox(
+                    "No images found. Did you remember to add them to the Images module?",
+                    caption="No images",
+                    style=wx.OK | wx.ICON_INFORMATION)
+                    return False
+
                 # Divide measurements to up to 40 runs
                 n_measurements = int(len(file_list)/self.n_images_per_measurement.value)
                 measurements_per_run = int(n_measurements/CPRynner_max_tasks) + 1
