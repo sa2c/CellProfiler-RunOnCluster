@@ -244,12 +244,16 @@ class ClusterviewFrame(wx.Frame):
         else:
             self.runs = []
 
+
+
     def download( self, run ):
         '''
         Ask for a destination folder, download files in the results
         folders and move to the destination
         '''
         target_directory = self.ask_for_output_dir()
+        if not target_directory:
+            return False
 
         # Download into a temporary directory
         tmpdir = tempfile.mkdtemp()
@@ -280,7 +284,7 @@ class ClusterviewFrame(wx.Frame):
                     wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
         try:
             if dialog.ShowModal() == wx.ID_CANCEL:
-                return
+                return False
             target_directory = dialog.GetPath()
         except Exception:
             wx.LogError('Failed to open directory!')
