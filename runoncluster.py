@@ -97,6 +97,17 @@ class RunOnCluster(cpm.Module):
             value=True,
             doc= "Wether the images are ordered by image type first. If not, ordering by measurement first is assumed."
         )
+        self.is_archive = cellprofiler.setting.Binary(
+            text="Is image archive",
+            value=False,
+            doc= "Set to Yes if the the images are included as a single image archive, such as an Ism file."
+        )
+        self.measurements_in_archive = cellprofiler.setting.Integer(
+            "Number of measurements in the archive",
+            1,
+            minval=1,
+            doc = "The number of measurements in the archive file."
+        )
         self.max_walltime = cellprofiler.setting.Integer(
             "Maximum Runtime (hours)",
             24,
@@ -114,8 +125,10 @@ class RunOnCluster(cpm.Module):
     def settings(self):
         result = [
             self.runname,
+            self.is_archive,
             self.n_images_per_measurement,
             self.type_first,
+            self.measurements_in_archive,
             self.max_walltime,
             self.account,
             self.batch_mode,
@@ -129,8 +142,18 @@ class RunOnCluster(cpm.Module):
     def visible_settings(self):
         result = [
             self.runname,
-            self.n_images_per_measurement,
-            self.type_first,
+            self.is_archive,
+        ]
+        
+        if self.is_archive.value:
+            result += [self.measurements_in_archive]
+        else:
+            result += [
+                self.n_images_per_measurement,
+                self.type_first,
+            ]
+
+        result += [
             self.max_walltime,
             self.account,
         ]
@@ -141,6 +164,8 @@ class RunOnCluster(cpm.Module):
             self.runname,
             self.n_images_per_measurement,
             self.type_first,
+            self.is_archive,
+            self.measurements_in_archive,
             self.max_walltime,
             self.account,
         ]
@@ -188,13 +213,31 @@ class RunOnCluster(cpm.Module):
                     return False
 
                 # Divide measurements to up to 40 runs
-                n_measurements = int(len(file_list)/self.n_images_per_measurement.value)
-                measurements_per_run = int(n_measurements/CPRynner_max_tasks) + 1
-                grouped_images = self.group_images( file_list, n_measurements, measurements_per_run, self.type_first.value)
-                n_image_groups = max(zip(*grouped_images)[0]) + 1
+                n_images = len(file_list)
+                
+                if not self.is_archive.value:
+                    n_measurements = int(n_images/self.n_images_per_measurement.value)
+                    measurements_per_run = int(n_measurements/CPRynner_max_tasks) + 1
 
-                # Add image files to uploads
-                uploads = [[name, 'run{}/images'.format(g)] for g,name in grouped_images]
+                    grouped_images = self.group_images( file_list, n_measurements, measurements_per_run, self.type_first.value)
+                    n_image_groups = max(zip(*grouped_images)[0]) + 1
+
+                    # Add image files to uploads
+                    uploads = [[name, 'run{}/images'.format(g)] for g,name in grouped_images]
+
+                else:
+                    if n_images > 1:
+                        wx.MessageBox(
+                        "Include only one image archive per run.",
+                        caption="Image error",
+                        style=wx.OK | wx.ICON_INFORMATION)
+                        return False
+                    
+                    uploads = [[file_list[0], 'images']]
+
+                    n_measurements = self.measurements_in_archive.value
+                    n_image_groups = CPRynner_max_tasks
+
 
                 # Also add the pipeline
                 uploads +=  [[path,'.']]
@@ -206,18 +249,35 @@ class RunOnCluster(cpm.Module):
                 # Create run scripts and add to uploads
                 for g in range(n_image_groups):
                     runscript_name = 'cellprofiler_run{}'.format(g)
-                    local_script_path = os.path.join(rynner.provider.script_dir, runscript_name)
+                    local_script_path = os.path.join    (rynner.provider.script_dir, runscript_name)
+
+                    if not self.is_archive.value:
+                        n_measurements = len([ i for i in   grouped_images if i[0]==g ]) /    self.n_images_per_measurement.value
+                        script = "cellprofiler -c -p ../Batch_data.h5 -o results -i images -f 1 -l {} 2>>../cellprofiler_output; rm -r images".format(n_measurements)
+                    
+                    else:
+                        n_images_per_group = int(n_measurements/CPRynner_max_tasks)
+                        n_additional_images = int(n_measurements%CPRynner_max_tasks)
+
+                        if g < n_additional_images:
+                            first = (n_images_per_group+1)*g
+                            last = (n_images_per_group+1)*(g+1)
+                        else:
+                            first = n_images_per_group*g + n_additional_images
+                            last = n_images_per_group*(g+1) + n_additional_images
+
+                        script = "mkdir images; cp ../images/* images; cellprofiler -c -p ../Batch_data.h5 -o results -i images -f {} -l {} 2>>../cellprofiler_output; rm -r images".format(first, last)
 
                     with open(local_script_path, "w") as file:
-                        n_measurements = len([ i for i in grouped_images if i[0]==g ]) / self.n_images_per_measurement.value
-                        file.write("cellprofiler -c -p ../Batch_data.h5 -o results -i images -f 1 -l {} 2>>../cellprofiler_output".format(n_measurements))
+                        file.write(script)
 
                     uploads += [[local_script_path,"run{}".format(g)]]
+
 
                 # Define the job to run
                 run = rynner.create_run( 
                     jobname = self.runname.value.replace(' ','_'),
-                    script = 'source /apps/local/life-sciences/CellProfiler/bin/activate; module load java; printf %s\\\\n {{0..{}}} | xargs -P 40 -n 1 -IX bash -c "cd runX ; ./cellprofiler_runX; ";'.format(n_image_groups-1),
+                    script = 'source /home/s.j.m.o.rantaharju/CellProfiler/bin/activate; module load java; printf %s\\\\n {{0..{}}} | xargs -P 40 -n 1 -IX bash -c "cd runX ; ./cellprofiler_runX; ";'.format(n_image_groups-1),
                     uploads = uploads,
                     downloads =  downloads,
                 )
