@@ -264,7 +264,7 @@ class RunOnCluster(cpm.Module):
                                       self.wants_default_output_directory)
         
         sunbird_max_runtime = 72
-        if self.max_walltime.value > sunbird_max_runtime:
+        if self.max_walltime.value >= sunbird_max_runtime:
             raise cps.ValidationError( 
                 "The maximum runtime must be less than "+str(sunbird_max_runtime)+" hours.",
                 self.max_walltime)
