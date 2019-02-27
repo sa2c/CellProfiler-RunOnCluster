@@ -102,6 +102,12 @@ class RunOnCluster(cpm.Module):
             24,
             doc = "The maximum time for reserving a node on the cluster. Should be higher than the actual runtime, or the run may not compelte. Runs with lower values will pass the queue more quickly."
         )
+        self.account = cps.Text( 
+            "Project Code",
+            "",
+            doc = "Enter a project code of an Supercomputing Wales project you wish to run under. This can be left empty if you have only one project.",
+        )
+
         self.batch_mode = cps.Binary("Hidden: in batch mode", False)
         self.revision = cps.Integer("Hidden: revision number", 0)
 
@@ -111,6 +117,7 @@ class RunOnCluster(cpm.Module):
             self.n_images_per_measurement,
             self.type_first,
             self.max_walltime,
+            self.account,
             self.batch_mode,
             self.revision,
         ]
@@ -125,6 +132,7 @@ class RunOnCluster(cpm.Module):
             self.n_images_per_measurement,
             self.type_first,
             self.max_walltime,
+            self.account,
         ]
         return result
 
@@ -134,6 +142,7 @@ class RunOnCluster(cpm.Module):
             self.n_images_per_measurement,
             self.type_first,
             self.max_walltime,
+            self.account,
         ]
 
         return help_settings
@@ -212,6 +221,8 @@ class RunOnCluster(cpm.Module):
                     uploads = uploads,
                     downloads =  downloads,
                 )
+
+                run['account'] = self.account.value
 
                 # Copy the pipeline and images accross
                 dialog = wx.GenericProgressDialog("Uploading","Uploading files",style=wx.PD_APP_MODAL)
