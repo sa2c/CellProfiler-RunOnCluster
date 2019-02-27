@@ -184,15 +184,15 @@ class ClusterviewFrame(wx.Frame):
 
             # The download button
             if run.status == 'COMPLETED':
-            if hasattr(run, 'downloaded') and run.downloaded:
-                label = 'Download Again'
-            else:
-                label = 'Download Results'
-            btn = wx.Button(self.panel, label=label, size=(130, 40))
-            btn.Bind(wx.EVT_BUTTON, lambda e, r=run: self.on_download_click( e, r ) )
-            hbox3 = wx.BoxSizer(wx.HORIZONTAL)
-            hbox3.Add(btn)
-            vbox.Add(hbox3, flag=wx.ALIGN_RIGHT|wx.RIGHT, border=10)
+                if hasattr(run, 'downloaded') and run.downloaded:
+                    label = 'Download Again'
+                else:
+                    label = 'Download Results'
+                btn = wx.Button(self.panel, label=label, size=(130, 40))
+                btn.Bind(wx.EVT_BUTTON, lambda e, r=run: self.on_download_click( e, r ) )
+                hbox3 = wx.BoxSizer(wx.HORIZONTAL)
+                hbox3.Add(btn)
+                vbox.Add(hbox3, flag=wx.ALIGN_RIGHT|wx.RIGHT, border=10)
 
     def set_timer(self, element):
         '''
@@ -216,14 +216,13 @@ class ClusterviewFrame(wx.Frame):
         Update runs and rebuild the layout
         '''
         self.update()
-        self.vbox.Clear(True)
-        self.build_view(self.vbox)
-        self.vbox.Layout()
-        self.FitInside()
+        self.draw()
 
     def on_logout_click( self, event ):
         CPRynner.logout()
         self.runs = []
+
+    def draw(self):
         self.vbox.Clear(True)
         self.build_view(self.vbox)
         self.vbox.Layout()
@@ -254,7 +253,7 @@ class ClusterviewFrame(wx.Frame):
         target_directory = self.ask_for_output_dir()
         if not target_directory:
             return False
-
+            
         # Download into a temporary directory
         tmpdir = tempfile.mkdtemp()
         self.download_to_tempdir(run, tmpdir)
@@ -274,6 +273,7 @@ class ClusterviewFrame(wx.Frame):
         CPRynner.CPRynner().save_run_config( run )
 
         self.update()
+        self.draw()
 
     def ask_for_output_dir(self):
         '''
