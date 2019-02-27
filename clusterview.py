@@ -159,25 +159,31 @@ class ClusterviewFrame(wx.Frame):
             st.SetFont(font)
             hbox1 = wx.BoxSizer(wx.HORIZONTAL)
             hbox1.Add(st, flag=wx.RIGHT, border=8)
-            vbox.Add(hbox1, flag=wx.EXPAND|wx.LEFT|wx.RIGHT|wx.TOP, border=10)
-
-            # Padding
-            vbox.Add((-1, 5))
+            vbox.Add(hbox1, flag=wx.EXPAND|wx.LEFT|wx.RIGHT|wx.TOP)
 
             # The state of the run
+            hbox2 = wx.BoxSizer(wx.HORIZONTAL)
             time_since = str(datetime.datetime.fromtimestamp(int(run['status_time'])))
             st2 = wx.StaticText( self.panel,
                 label=run.status+" since " + time_since
             )
-            st2.SetFont(font)
-            hbox2 = wx.BoxSizer(wx.HORIZONTAL)
             hbox2.Add(st2)
             vbox.Add(hbox2, flag=wx.LEFT | wx.TOP, border=10)
+
+            if run.status == 'PENDING':
+                starttime = run['starttime']
+                hbox3 = wx.BoxSizer(wx.HORIZONTAL)
+                st3 = wx.StaticText( self.panel,
+                    label="Estimated start time " + starttime
+                )
+                hbox3.Add(st3)
+                vbox.Add(hbox3, flag=wx.LEFT | wx.TOP, border=10)
 
             # Padding
             vbox.Add((-1, 5))
 
             # The download button
+            if run.status == 'COMPLETED':
             if hasattr(run, 'downloaded') and run.downloaded:
                 label = 'Download Again'
             else:
@@ -231,6 +237,7 @@ class ClusterviewFrame(wx.Frame):
         if rynner is not None:
             self.runs = [ r for r in rynner.get_runs() if 'upload_time' in r ]
             rynner.update(self.runs)
+            rynner.update_start_times(self.runs)
             for run in self.runs:
                 run['status_time'] = rynner.read_time(run)
             self.update_time = datetime.datetime.now()
