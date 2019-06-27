@@ -249,7 +249,7 @@ class RunOnCluster(cpm.Module):
                 # Create run scripts and add to uploads
                 for g in range(n_image_groups):
                     runscript_name = 'cellprofiler_run{}'.format(g)
-                    local_script_path = os.path.join    (rynner.provider.script_dir, runscript_name)
+                    local_script_path = os.path.join(rynner.provider.script_dir, runscript_name)
 
                     if not self.is_archive.value:
                         n_measurements = len([ i for i in   grouped_images if i[0]==g ]) /    self.n_images_per_measurement.value
