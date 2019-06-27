@@ -22,20 +22,20 @@ python2 -m pip install -r requirements.txt
 
 ### Submitting to Cluster
 
-Once you have tested your pipeline on your local machine, add all images to be processed into the Images plugin in the usual way. Add the RunOnCluster module in the Other category to the end of the pipeline.
+Once you have tested your pipeline on your local machine, add all images to be processed into the Images plugin in the usual way. Add the `RunOnCluster` module in the `Other` category to the end of the pipeline.
 
 The module has four settings:
  * Run Name: An identifier that allows you to recognize the pipeline and image batch.
  * Number of images per measurement: If several image files are required for a single measurement, adjust this to the number of images required.
- * Image type first: Select "Yes" if the image type appears before the measurement number in the image name. Select "No" if the measurement number appears before the image type.
- * Maximum Runtime (hours): The amount of time to reserve a node on the cluster. The actual runtime can be lower, but not larger than this. If the run takes longer than the time given, it will be terminated before completion. Must be less than 72.
+ * Image type first: Select `Yes` if the image type appears before the measurement number in the image file name. Select `No` if the measurement number appears before the image type.
+ * Maximum Runtime (hours): The amount of time to reserve a node for on the cluster. The actual runtime can be lower, but not larger than this. If the run takes longer than the time given, it will be terminated before completion. Must be less than 72.
 
- Submit the pipeline by pressing "Analyze Images". The plugin will copy the image files and the pipeline to the cluster and add the process to the queue.
+ Submit the pipeline by pressing `Analyze Images`. The plugin will copy the image files and the pipeline to the cluster and add the process to the queue.
 
  ### Checking run status
 
- Open the ClusterView module in the Data Tools menu. You will see a list of all runs submitted to the cluster. Under the run name the module will display "PENDING" for runs in queue or currently running and "COMPLETED" for runs that have stopped running. Click "Update" in the upper left corner to refresh the status of the runs. Use the "Download Results" button to download and inspect the results.
- If you have already downloaded the results, the button label will change to "Download Again".
+ Open the ClusterView module in the Data Tools menu. You will see a list of all runs submitted to the cluster. Under the run name the module will display `PENDING` for runs in queue or currently running and `COMPLETED` for runs that have stopped running. Click `Update` in the upper left corner to refresh the status of the runs. Use the `Download Results` button to download and inspect the results.
+ If you have already downloaded the results, the button label will change to `Download Again`.
 
 
 
