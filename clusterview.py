@@ -137,13 +137,16 @@ class ClusterviewFrame(wx.Frame):
         hbox.Add(update_time_text, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 8)
         vbox.Add(hbox, 0, wx.EXPAND, 10)
 
-        # The logout button in its own sizer
-        btn = wx.Button(self.panel, label='Logout', size=(90, 30))
-        btn.Bind(wx.EVT_BUTTON, self.on_logout_click )
-
+        # The logout and settings buttons in a separate sizer
+        logout_btn = wx.Button(self.panel, label='Logout', size=(90, 30))
+        logout_btn.Bind(wx.EVT_BUTTON, self.on_logout_click )
+        settings_btn = wx.Button(self.panel, label='Cluster Settings', size=(90, 30))
+        settings_btn.Bind(wx.EVT_BUTTON, 
+        self.on_cluster_settings_click)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         hbox.Add((0,0), 1, wx.ALIGN_CENTER_VERTICAL)
-        hbox.Add(btn, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 8)
+        hbox.Add(logout_btn, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 8)
+        hbox.Add(settings_btn, 0, wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, 8)
         vbox.Add(hbox, 0, wx.EXPAND, 10)
 
         # Margin and a separator
@@ -221,6 +224,9 @@ class ClusterviewFrame(wx.Frame):
     def on_logout_click( self, event ):
         CPRynner.logout()
         self.runs = []
+
+    def on_cluster_settings_click(self, event):
+        CPRynner.update_cluster_parameters()
 
     def draw(self):
         self.vbox.Clear(True)
