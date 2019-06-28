@@ -226,7 +226,15 @@ class ClusterviewFrame(wx.Frame):
         self.runs = []
 
     def on_cluster_settings_click(self, event):
+        cluster_address_orig, _, _, _ = CPRynner.cluster_parameters()
         CPRynner.update_cluster_parameters()
+        cluster_address_new, _, _, _ = CPRynner.cluster_parameters()
+
+        if cluster_address_orig != cluster_address_new:
+            CPRynner.logout()
+        self.runs = []
+        self.update()
+        self.draw()
 
     def draw(self):
         self.vbox.Clear(True)
