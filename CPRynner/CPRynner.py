@@ -45,7 +45,7 @@ class clusterSettingDialog(wx.Dialog):
         tasks_per_node_sizer.Add(self.tasks_per_node, 0, wx.ALL, 5)
         
         # max_runtime field
-        max_runtime = cluster_max_runtime()
+        max_runtime = str( cluster_max_runtime() )
         max_runtime_sizer = wx.BoxSizer(wx.HORIZONTAL)
         max_runtime_label = wx.StaticText(self.panel, label="Runtime limit (hours):", size=(300, -1))
         max_runtime_sizer.Add(max_runtime_label, 0, wx.ALL|wx.CENTER, 5)
@@ -207,7 +207,7 @@ def cluster_max_runtime():
         max_runtime = cnfg.Read('max_runtime')
     else:
         max_runtime = '72'
-    return max_runtime
+    return int(max_runtime)
 
 def update_cluster_parameters():
     cluster_address, tasks_per_node, work_dir, setup_script = cluster_parameters()
@@ -216,12 +216,14 @@ def update_cluster_parameters():
     if result == wx.ID_OK:
         cluster_address = dialog.cluster_address.GetValue()
         tasks_per_node = dialog.tasks_per_node.GetValue()
+        max_runtime = dialog.max_runtime.GetValue()
         work_dir = dialog.work_dir.GetValue()
         setup_script = dialog.setup_script.GetValue()
 
         cnfg = wx.Config('CPRynner')
         cnfg.Write('cluster_address', cluster_address)
         cnfg.Write('tasks_per_node', str(tasks_per_node))
+        cnfg.Write('max_runtime', str(max_runtime))
         cnfg.Write('work_dir', work_dir)
         cnfg.Write('setup_script', setup_script)
 

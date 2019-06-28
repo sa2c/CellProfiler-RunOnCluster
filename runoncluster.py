@@ -44,6 +44,7 @@ from cellprofiler.measurement import F_BATCH_DATA_H5
 from CPRynner.CPRynner import CPRynner
 from CPRynner.CPRynner import update_cluster_parameters
 from CPRynner.CPRynner import cluster_parameters
+from CPRynner.CPRynner import cluster_max_runtime
 
 
 class RunOnCluster(cpm.Module):
@@ -219,7 +220,7 @@ class RunOnCluster(cpm.Module):
                     style=wx.OK | wx.ICON_INFORMATION)
                     return False
 
-                # Divide measurements the runs according to the number of cores on a node
+                # Divide measurements to runs according to the number of cores on a node
                 n_images = len(file_list)
                 
                 if not self.is_archive.value:
@@ -330,19 +331,19 @@ class RunOnCluster(cpm.Module):
         if id(self) != id(pipeline.modules()[-1]):
             raise cps.ValidationError("The RunOnCluster module must be "
                                       "the last in the pipeline.",
-                                      self.wants_default_output_directory)
+                                      self.runname)
         
-        sunbird_max_runtime = 72
-        if self.max_walltime.value >= sunbird_max_runtime:
+        max_runtime = cluster_max_runtime()
+        if self.max_walltime.value >= max_runtime:
             raise cps.ValidationError( 
-                "The maximum runtime must be less than "+str(sunbird_max_runtime)+" hours.",
+                "The maximum runtime must be less than "+str(max_runtime)+" hours.",
                 self.max_walltime)
 
     def validate_module_warnings(self, pipeline):
         '''Warn user re: Test mode '''
         if pipeline.test_mode:
             raise cps.ValidationError("RunOnCluster will not produce output in Test Mode",
-                                      self.wants_default_output_directory)
+                                      self.runname)
 
     def alter_path(self, path, **varargs):
         if path == cpprefs.get_default_output_directory():
