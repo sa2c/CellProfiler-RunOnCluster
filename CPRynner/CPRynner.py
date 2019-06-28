@@ -33,6 +33,9 @@ class clusterSettingDialog(wx.Dialog):
         # cluster_address field
         cluster_address_sizer = wx.BoxSizer(wx.HORIZONTAL)
         cluster_address_label = wx.StaticText(self.panel, label="Cluster Address:", size=(100, -1))
+        cluster_address_label.SetToolTip(wx.ToolTip(
+            "The url of the cluster. If logged in, changing this will cause you to logout."
+        ))
         cluster_address_sizer.Add(cluster_address_label, 0, wx.ALL|wx.CENTER, 5, )
         self.cluster_address = wx.TextCtrl(self.panel, value = cluster_address, size=(300, -1))
         cluster_address_sizer.Add(self.cluster_address, 0, wx.ALL, 5)
@@ -40,6 +43,9 @@ class clusterSettingDialog(wx.Dialog):
         # tasks_per_node field
         tasks_per_node_sizer = wx.BoxSizer(wx.HORIZONTAL)
         tasks_per_node_label = wx.StaticText(self.panel, label="Tasks Per Node:", size=(300, -1))
+        tasks_per_node_label.SetToolTip(wx.ToolTip(
+            "The number of individual processes that can be run on a single node. Usually the number of cpu core per node."
+        ))
         tasks_per_node_sizer.Add(tasks_per_node_label, 0, wx.ALL|wx.CENTER, 5)
         self.tasks_per_node = wx.SpinCtrl(self.panel, value = str(tasks_per_node), size=(100, -1))
         tasks_per_node_sizer.Add(self.tasks_per_node, 0, wx.ALL, 5)
@@ -48,6 +54,9 @@ class clusterSettingDialog(wx.Dialog):
         max_runtime = str( cluster_max_runtime() )
         max_runtime_sizer = wx.BoxSizer(wx.HORIZONTAL)
         max_runtime_label = wx.StaticText(self.panel, label="Runtime limit (hours):", size=(300, -1))
+        max_runtime_label.SetToolTip(wx.ToolTip(
+            "The maximum runtime limit on the cluster. You can set a lower limit for individual jobs."
+        ))
         max_runtime_sizer.Add(max_runtime_label, 0, wx.ALL|wx.CENTER, 5)
         self.max_runtime = wx.SpinCtrl(self.panel, value = str(max_runtime), size=(100, -1))
         max_runtime_sizer.Add(self.max_runtime, 0, wx.ALL, 5)
@@ -55,6 +64,9 @@ class clusterSettingDialog(wx.Dialog):
         # work_dir field
         work_dir_sizer = wx.BoxSizer(wx.HORIZONTAL)
         work_dir_label = wx.StaticText(self.panel, label="Working Directory:", size=(100, -1))
+        work_dir_label.SetToolTip(wx.ToolTip(
+            "Path to the directory in which the job will be run. The {username} tag will be replaced by your username on the cluster."
+        ))
         work_dir_sizer.Add(work_dir_label, 0, wx.ALL|wx.CENTER, 5)
         self.work_dir = wx.TextCtrl(self.panel, value = work_dir, size=(300, -1))
         work_dir_sizer.Add(self.work_dir, 0, wx.ALL, 5)
@@ -62,6 +74,9 @@ class clusterSettingDialog(wx.Dialog):
         # setup_script field
         setup_script_label_sizer = wx.BoxSizer(wx.HORIZONTAL)
         setup_script_label = wx.StaticText(self.panel, label="Setup Script:", size=(100, -1))
+        setup_script_label.SetToolTip(wx.ToolTip(
+            "Will be at the beginning of the all jobs. Can be any general bash script, but may be limited by the cluster. For example, compute nodes often lack internet access and cannot install python packages."
+        ))
         setup_script_label_sizer.Add(setup_script_label, 0, wx.ALL|wx.CENTER, 5)
 
         setup_script_field_sizer = wx.BoxSizer(wx.HORIZONTAL)
