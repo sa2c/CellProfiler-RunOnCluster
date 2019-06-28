@@ -84,7 +84,7 @@ class RunOnCluster(cpm.Module):
 
     def create_settings(self):
         '''Create the module settings and name the module'''
-        self.runname = cps.Text( 
+        self.runname = cps.Text(
             "Run Name",
             "Run_name",
             doc = "Enter a recognizable identifier for the run (spaces will be replaced by undescores)",
