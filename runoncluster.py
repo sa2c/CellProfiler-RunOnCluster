@@ -219,7 +219,7 @@ class RunOnCluster(cpm.Module):
                     style=wx.OK | wx.ICON_INFORMATION)
                     return False
 
-                # Divide measurements to up to 40 runs
+                # Divide measurements the runs according to the number of cores on a node
                 n_images = len(file_list)
                 
                 if not self.is_archive.value:
