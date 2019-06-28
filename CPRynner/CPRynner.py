@@ -65,7 +65,7 @@ class clusterSettingDialog(wx.Dialog):
         work_dir_sizer = wx.BoxSizer(wx.HORIZONTAL)
         work_dir_label = wx.StaticText(self.panel, label="Working Directory:", size=(100, -1))
         work_dir_label.SetToolTip(wx.ToolTip(
-            "Path to the directory in which the job will be run. The {username} tag will be replaced by your username on the cluster."
+            "Path to the directory in which the job will be run. The {username} tag will be replaced by your username on the cluster and is usefull when multiple people use the same machine."
         ))
         work_dir_sizer.Add(work_dir_label, 0, wx.ALL|wx.CENTER, 5)
         self.work_dir = wx.TextCtrl(self.panel, value = work_dir, size=(300, -1))
