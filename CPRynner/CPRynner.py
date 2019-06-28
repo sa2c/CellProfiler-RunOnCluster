@@ -26,7 +26,7 @@ class clusterSettingDialog(wx.Dialog):
 
     def __init__(self, cluster_address, tasks_per_node, work_dir, setup_script ):
         """Constructor"""
-        super(clusterSettingDialog, self).__init__(None, title="Login", size = (420,360))
+        super(clusterSettingDialog, self).__init__(None, title="Login", size = (420,480))
 
         self.panel = wx.Panel(self)
 
@@ -39,10 +39,18 @@ class clusterSettingDialog(wx.Dialog):
 
         # tasks_per_node field
         tasks_per_node_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        tasks_per_node_label = wx.StaticText(self.panel, label="Tasks Per Node:", size=(100, -1))
+        tasks_per_node_label = wx.StaticText(self.panel, label="Tasks Per Node:", size=(300, -1))
         tasks_per_node_sizer.Add(tasks_per_node_label, 0, wx.ALL|wx.CENTER, 5)
-        self.tasks_per_node = wx.SpinCtrl(self.panel, value = str(tasks_per_node), size=(300, -1))
+        self.tasks_per_node = wx.SpinCtrl(self.panel, value = str(tasks_per_node), size=(100, -1))
         tasks_per_node_sizer.Add(self.tasks_per_node, 0, wx.ALL, 5)
+        
+        # max_runtime field
+        max_runtime = cluster_max_runtime()
+        max_runtime_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        max_runtime_label = wx.StaticText(self.panel, label="Runtime limit (hours):", size=(300, -1))
+        max_runtime_sizer.Add(max_runtime_label, 0, wx.ALL|wx.CENTER, 5)
+        self.max_runtime = wx.SpinCtrl(self.panel, value = str(max_runtime), size=(100, -1))
+        max_runtime_sizer.Add(self.max_runtime, 0, wx.ALL, 5)
 
         # work_dir field
         work_dir_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -72,12 +80,15 @@ class clusterSettingDialog(wx.Dialog):
         button_event = wx.PyCommandEvent(wx.EVT_BUTTON.typeId,self.ok_button.GetId())
         self.cluster_address.Bind( wx.EVT_TEXT_ENTER, lambda e: wx.PostEvent(self, button_event) )
         self.tasks_per_node.Bind( wx.EVT_TEXT_ENTER, lambda e: wx.PostEvent(self, button_event) )
+        self.max_runtime.Bind( wx.EVT_TEXT_ENTER, lambda e: wx.PostEvent(self, button_event) )
+        self.max_runtime.Bind( wx.EVT_TEXT_ENTER, lambda e: wx.PostEvent(self, button_event) )
         self.work_dir.Bind( wx.EVT_TEXT_ENTER, lambda e: wx.PostEvent(self, button_event) )
 
         # Build the layout
         main_sizer = wx.BoxSizer(wx.VERTICAL)
         main_sizer.Add(cluster_address_sizer, 0, wx.ALL, 5)
         main_sizer.Add(tasks_per_node_sizer, 0, wx.ALL, 5)
+        main_sizer.Add(max_runtime_sizer, 0, wx.ALL, 5)
         main_sizer.Add(work_dir_sizer, 0, wx.ALL, 5)
         main_sizer.Add(setup_script_label_sizer, 0, wx.ALL, 5)
         main_sizer.Add(setup_script_field_sizer, 0, wx.ALL, 5)
@@ -190,6 +201,13 @@ module load java;"""
 
     return cluster_address, tasks_per_node, work_dir, setup_script
 
+def cluster_max_runtime():
+    cnfg = wx.Config('CPRynner')
+    if cnfg.Exists('max_runtime'):
+        max_runtime = cnfg.Read('max_runtime')
+    else:
+        max_runtime = '72'
+    return max_runtime
 
 def update_cluster_parameters():
     cluster_address, tasks_per_node, work_dir, setup_script = cluster_parameters()
