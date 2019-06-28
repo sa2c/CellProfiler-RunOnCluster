@@ -42,6 +42,7 @@ import cellprofiler.workspace as cpw
 from cellprofiler.measurement import F_BATCH_DATA_H5
 
 from CPRynner.CPRynner import CPRynner
+from CPRynner.CPRynner import update_cluster_parameters
 from CPRynner.CPRynner import max_tasks as CPRynner_max_tasks
 
 
@@ -119,8 +120,11 @@ class RunOnCluster(cpm.Module):
             doc = "Enter a project code of an Supercomputing Wales project you wish to run under. This can be left empty if you have only one project.",
         )
 
+        self.cluster_settings_button = cps.DoSomething("", "Cluster Settings", update_cluster_parameters)
+
         self.batch_mode = cps.Binary("Hidden: in batch mode", False)
         self.revision = cps.Integer("Hidden: revision number", 0)
+
 
     def settings(self):
         result = [
@@ -156,6 +160,7 @@ class RunOnCluster(cpm.Module):
         result += [
             self.max_walltime,
             self.account,
+            self.cluster_settings_button,
         ]
         return result
 
