@@ -19,10 +19,6 @@ from libsubmit.launchers.launchers import SimpleLauncher
 from libsubmit.channels.errors import SSHException
 
 
-# Default cluster specific settings
-max_tasks = 40
-
-
 class clusterSettingDialog(wx.Dialog):
     """
     A dialog window for setting cluster parameters
@@ -30,37 +26,39 @@ class clusterSettingDialog(wx.Dialog):
 
     def __init__(self, cluster_address, tasks_per_node, work_dir, setup_script ):
         """Constructor"""
-        super(clusterSettingDialog, self).__init__(None, title="Login", size = (300,360))
+        super(clusterSettingDialog, self).__init__(None, title="Login", size = (420,360))
 
         self.panel = wx.Panel(self)
 
         # cluster_address field
         cluster_address_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        cluster_address_label = wx.StaticText(self.panel, label="Cluster Address:")
-        cluster_address_sizer.Add(cluster_address_label, 0, wx.ALL|wx.CENTER, 5)
-        self.cluster_address = wx.TextCtrl(self.panel, value = cluster_address, size=(160, -1))
+        cluster_address_label = wx.StaticText(self.panel, label="Cluster Address:", size=(100, -1))
+        cluster_address_sizer.Add(cluster_address_label, 0, wx.ALL|wx.CENTER, 5, )
+        self.cluster_address = wx.TextCtrl(self.panel, value = cluster_address, size=(300, -1))
         cluster_address_sizer.Add(self.cluster_address, 0, wx.ALL, 5)
 
         # tasks_per_node field
         tasks_per_node_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        tasks_per_node_label = wx.StaticText(self.panel, label="Tasks Per Node:")
+        tasks_per_node_label = wx.StaticText(self.panel, label="Tasks Per Node:", size=(100, -1))
         tasks_per_node_sizer.Add(tasks_per_node_label, 0, wx.ALL|wx.CENTER, 5)
-        self.tasks_per_node = wx.SpinCtrl(self.panel, value = str(tasks_per_node), size=(160, -1))
+        self.tasks_per_node = wx.SpinCtrl(self.panel, value = str(tasks_per_node), size=(300, -1))
         tasks_per_node_sizer.Add(self.tasks_per_node, 0, wx.ALL, 5)
 
         # work_dir field
         work_dir_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        work_dir_label = wx.StaticText(self.panel, label="Working Directory:")
+        work_dir_label = wx.StaticText(self.panel, label="Working Directory:", size=(100, -1))
         work_dir_sizer.Add(work_dir_label, 0, wx.ALL|wx.CENTER, 5)
-        self.work_dir = wx.TextCtrl(self.panel, value = work_dir, size=(160, -1))
+        self.work_dir = wx.TextCtrl(self.panel, value = work_dir, size=(300, -1))
         work_dir_sizer.Add(self.work_dir, 0, wx.ALL, 5)
 
         # setup_script field
-        setup_script_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        setup_script_label = wx.StaticText(self.panel, label="Setup Script:")
-        setup_script_sizer.Add(setup_script_label, 0, wx.ALL|wx.CENTER, 5)
-        self.setup_script = wx.TextCtrl(self.panel, value = setup_script, size=(160, -1))
-        setup_script_sizer.Add(self.setup_script, 0, wx.ALL, 5)
+        setup_script_label_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        setup_script_label = wx.StaticText(self.panel, label="Setup Script:", size=(100, -1))
+        setup_script_label_sizer.Add(setup_script_label, 0, wx.ALL|wx.CENTER, 5)
+
+        setup_script_field_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.setup_script = wx.TextCtrl(self.panel, value = setup_script, size=(400, 80), style=wx.TE_MULTILINE)
+        setup_script_field_sizer.Add(self.setup_script, 0, wx.ALL, 5)
 
         # The Ok and Cancel button
         button_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -75,14 +73,14 @@ class clusterSettingDialog(wx.Dialog):
         self.cluster_address.Bind( wx.EVT_TEXT_ENTER, lambda e: wx.PostEvent(self, button_event) )
         self.tasks_per_node.Bind( wx.EVT_TEXT_ENTER, lambda e: wx.PostEvent(self, button_event) )
         self.work_dir.Bind( wx.EVT_TEXT_ENTER, lambda e: wx.PostEvent(self, button_event) )
-        self.setup_script.Bind( wx.EVT_TEXT_ENTER, lambda e: wx.PostEvent(self, button_event) )
 
         # Build the layout
         main_sizer = wx.BoxSizer(wx.VERTICAL)
         main_sizer.Add(cluster_address_sizer, 0, wx.ALL, 5)
         main_sizer.Add(tasks_per_node_sizer, 0, wx.ALL, 5)
         main_sizer.Add(work_dir_sizer, 0, wx.ALL, 5)
-        main_sizer.Add(setup_script_sizer, 0, wx.ALL, 5)
+        main_sizer.Add(setup_script_label_sizer, 0, wx.ALL, 5)
+        main_sizer.Add(setup_script_field_sizer, 0, wx.ALL, 5)
         main_sizer.Add(button_sizer, 0, wx.ALL | wx.ALIGN_CENTER, 5)
  
         self.panel.SetSizer(main_sizer)
@@ -114,7 +112,6 @@ class LoginDialog(wx.Dialog):
         self.password = wx.TextCtrl(self.panel, size=(160, -1), style=wx.TE_PASSWORD|wx.TE_PROCESS_ENTER)
         password_sizer.Add(self.password, 0, wx.ALL, 5)
 
- 
         # The login and cancel button 
         button_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.ok_button = wx.Button(self.panel, wx.ID_OK, label="Login", size=(60, 30))
@@ -167,7 +164,7 @@ def _get_username_and_password():
     dialog.Destroy()
 
 
-def _cluster_parameters():
+def cluster_parameters():
     cnfg = wx.Config('CPRynner')
     if cnfg.Exists('cluster_address'):
         cluster_address = cnfg.Read('cluster_address')
@@ -182,27 +179,31 @@ def _cluster_parameters():
     if cnfg.Exists('work_dir'):
         work_dir = cnfg.Read('work_dir')
     else:
-        work_dir = 'sunbird.swansea.ac.uk'
+        work_dir = '/scratch/{username}/CellProfiler/'
 
     if cnfg.Exists('setup_script'):
         setup_script = cnfg.Read('setup_script')
     else:
-        setup_script = 'sunbird.swansea.ac.uk'
+        setup_script = """\
+source /home/s.j.m.o.rantaharju/CellProfiler/bin/activate;
+module load java;"""
 
     return cluster_address, tasks_per_node, work_dir, setup_script
 
 
 def update_cluster_parameters():
-    cluster_address, tasks_per_node, work_dir, setup_script = _cluster_parameters()
+    cluster_address, tasks_per_node, work_dir, setup_script = cluster_parameters()
     dialog = clusterSettingDialog( cluster_address, tasks_per_node, work_dir, setup_script )
     result = dialog.ShowModal()
     if result == wx.ID_OK:
         cluster_address = dialog.cluster_address.GetValue()
         tasks_per_node = dialog.tasks_per_node.GetValue()
+        work_dir = dialog.work_dir.GetValue()
+        setup_script = dialog.setup_script.GetValue()
 
         cnfg = wx.Config('CPRynner')
         cnfg.Write('cluster_address', cluster_address)
-        cnfg.Write('tasks_per_node', tasks_per_node)
+        cnfg.Write('tasks_per_node', str(tasks_per_node))
         cnfg.Write('work_dir', work_dir)
         cnfg.Write('setup_script', setup_script)
 
@@ -212,13 +213,13 @@ def update_cluster_parameters():
 def _create_rynner():
     ''' Create an instance of Rynner connected to the cluster
     '''
-    hostname, tasks_per_node, work_dir, setup_script = _cluster_parameters()
+    hostname, tasks_per_node, work_dir, setup_script = cluster_parameters()
     username, password = _get_username_and_password()
     if username is not None:
 
-        tmpdir = tempfile.mkdtemp()
+        work_dir = work_dir.format(username=username)
 
-        path = '/scratch/'+username+'/CellProfiler/'
+        tmpdir = tempfile.mkdtemp()
     
         provider = SlurmProvider(
             'compute',
@@ -226,7 +227,7 @@ def _create_rynner():
                 hostname=hostname,
                 username=username,
                 password=password,
-                script_dir=path,
+                script_dir=work_dir,
             ),
             script_dir=tmpdir,
             nodes_per_block=1,
@@ -236,7 +237,7 @@ def _create_rynner():
             max_blocks=1,
             launcher = SimpleLauncher(),
         )
-        return Rynner(provider, path)
+        return Rynner(provider, work_dir)
     else:
         return None
 
