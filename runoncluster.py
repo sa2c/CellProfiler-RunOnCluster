@@ -42,7 +42,10 @@ import cellprofiler.workspace as cpw
 from cellprofiler.measurement import F_BATCH_DATA_H5
 
 from CPRynner.CPRynner import CPRynner
-from CPRynner.CPRynner import max_tasks as CPRynner_max_tasks
+from CPRynner.CPRynner import update_cluster_parameters
+from CPRynner.CPRynner import cluster_tasks_per_node
+from CPRynner.CPRynner import cluster_setup_script
+from CPRynner.CPRynner import cluster_max_runtime
 
 
 class RunOnCluster(cpm.Module):
@@ -119,8 +122,11 @@ class RunOnCluster(cpm.Module):
             doc = "Enter a project code of an Supercomputing Wales project you wish to run under. This can be left empty if you have only one project.",
         )
 
+        self.cluster_settings_button = cps.DoSomething("", "Cluster Settings", update_cluster_parameters)
+
         self.batch_mode = cps.Binary("Hidden: in batch mode", False)
         self.revision = cps.Integer("Hidden: revision number", 0)
+
 
     def settings(self):
         result = [
@@ -156,6 +162,7 @@ class RunOnCluster(cpm.Module):
         result += [
             self.max_walltime,
             self.account,
+            self.cluster_settings_button,
         ]
         return result
 
@@ -192,6 +199,9 @@ class RunOnCluster(cpm.Module):
         else:
             rynner = CPRynner()
             if rynner is not None:
+                # Get parameters
+                max_tasks = cluster_tasks_per_node()
+                setup_script = cluster_setup_script()
 
                 # Set walltime
                 rynner.provider.walltime = str(self.max_walltime.value)+":00:00"
@@ -212,12 +222,12 @@ class RunOnCluster(cpm.Module):
                     style=wx.OK | wx.ICON_INFORMATION)
                     return False
 
-                # Divide measurements to up to 40 runs
+                # Divide measurements to runs according to the number of cores on a node
                 n_images = len(file_list)
                 
                 if not self.is_archive.value:
                     n_measurements = int(n_images/self.n_images_per_measurement.value)
-                    measurements_per_run = int(n_measurements/CPRynner_max_tasks) + 1
+                    measurements_per_run = int(n_measurements/max_tasks) + 1
 
                     grouped_images = self.group_images( file_list, n_measurements, measurements_per_run, self.type_first.value)
                     n_image_groups = max(zip(*grouped_images)[0]) + 1
@@ -236,7 +246,7 @@ class RunOnCluster(cpm.Module):
                     uploads = [[file_list[0], 'images']]
 
                     n_measurements = self.measurements_in_archive.value
-                    n_image_groups = CPRynner_max_tasks
+                    n_image_groups = max_tasks
 
 
                 # Also add the pipeline
@@ -249,15 +259,15 @@ class RunOnCluster(cpm.Module):
                 # Create run scripts and add to uploads
                 for g in range(n_image_groups):
                     runscript_name = 'cellprofiler_run{}'.format(g)
-                    local_script_path = os.path.join    (rynner.provider.script_dir, runscript_name)
+                    local_script_path = os.path.join(rynner.provider.script_dir, runscript_name)
 
                     if not self.is_archive.value:
                         n_measurements = len([ i for i in   grouped_images if i[0]==g ]) /    self.n_images_per_measurement.value
                         script = "cellprofiler -c -p ../Batch_data.h5 -o results -i images -f 1 -l {} 2>>../cellprofiler_output; rm -r images".format(n_measurements)
                     
                     else:
-                        n_images_per_group = int(n_measurements/CPRynner_max_tasks)
-                        n_additional_images = int(n_measurements%CPRynner_max_tasks)
+                        n_images_per_group = int(n_measurements/max_tasks)
+                        n_additional_images = int(n_measurements%max_tasks)
 
                         if g < n_additional_images:
                             first = (n_images_per_group+1)*g
@@ -277,7 +287,9 @@ class RunOnCluster(cpm.Module):
                 # Define the job to run
                 run = rynner.create_run( 
                     jobname = self.runname.value.replace(' ','_'),
-                    script = 'source /home/s.j.m.o.rantaharju/CellProfiler/bin/activate; module load java; printf %s\\\\n {{0..{}}} | xargs -P 40 -n 1 -IX bash -c "cd runX ; ./cellprofiler_runX; ";'.format(n_image_groups-1),
+                    script = '{}; printf %s\\\\n {{0..{}}} | xargs -P 40 -n 1 -IX bash -c "cd runX ; ./cellprofiler_runX; ";'.format(
+                        setup_script, n_image_groups-1
+                    ),
                     uploads = uploads,
                     downloads =  downloads,
                 )
@@ -321,19 +333,19 @@ class RunOnCluster(cpm.Module):
         if id(self) != id(pipeline.modules()[-1]):
             raise cps.ValidationError("The RunOnCluster module must be "
                                       "the last in the pipeline.",
-                                      self.wants_default_output_directory)
+                                      self.runname)
         
-        sunbird_max_runtime = 72
-        if self.max_walltime.value >= sunbird_max_runtime:
+        max_runtime = cluster_max_runtime()
+        if self.max_walltime.value >= max_runtime:
             raise cps.ValidationError( 
-                "The maximum runtime must be less than "+str(sunbird_max_runtime)+" hours.",
+                "The maximum runtime must be less than "+str(max_runtime)+" hours.",
                 self.max_walltime)
 
     def validate_module_warnings(self, pipeline):
         '''Warn user re: Test mode '''
         if pipeline.test_mode:
             raise cps.ValidationError("RunOnCluster will not produce output in Test Mode",
-                                      self.wants_default_output_directory)
+                                      self.runname)
 
     def alter_path(self, path, **varargs):
         if path == cpprefs.get_default_output_directory():
