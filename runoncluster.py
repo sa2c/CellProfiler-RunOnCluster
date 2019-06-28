@@ -43,7 +43,8 @@ from cellprofiler.measurement import F_BATCH_DATA_H5
 
 from CPRynner.CPRynner import CPRynner
 from CPRynner.CPRynner import update_cluster_parameters
-from CPRynner.CPRynner import cluster_parameters
+from CPRynner.CPRynner import cluster_tasks_per_node
+from CPRynner.CPRynner import cluster_setup_script
 from CPRynner.CPRynner import cluster_max_runtime
 
 
@@ -199,7 +200,8 @@ class RunOnCluster(cpm.Module):
             rynner = CPRynner()
             if rynner is not None:
                 # Get parameters
-                cluster_address, max_tasks, work_dir, setup_script = cluster_parameters()
+                max_tasks = cluster_tasks_per_node()
+                setup_script = cluster_setup_script()
 
                 # Set walltime
                 rynner.provider.walltime = str(self.max_walltime.value)+":00:00"

@@ -175,31 +175,39 @@ def _get_username_and_password():
     dialog.Destroy()
 
 
-def cluster_parameters():
+def cluster_tasks_per_node():
     cnfg = wx.Config('CPRynner')
-    if cnfg.Exists('cluster_address'):
-        cluster_address = cnfg.Read('cluster_address')
-    else:
-        cluster_address = 'sunbird.swansea.ac.uk'
-
     if cnfg.Exists('tasks_per_node'):
         tasks_per_node = cnfg.Read('tasks_per_node')
     else:
         tasks_per_node = '40'
-    
-    if cnfg.Exists('work_dir'):
-        work_dir = cnfg.Read('work_dir')
-    else:
-        work_dir = '/scratch/{username}/CellProfiler/'
+    return tasks_per_node
 
+def cluster_setup_script():
+    cnfg = wx.Config('CPRynner')
     if cnfg.Exists('setup_script'):
         setup_script = cnfg.Read('setup_script')
     else:
         setup_script = """\
 source /home/s.j.m.o.rantaharju/CellProfiler/bin/activate;
 module load java;"""
+    return setup_script
 
-    return cluster_address, tasks_per_node, work_dir, setup_script
+def cluster_work_dir():
+    cnfg = wx.Config('CPRynner')
+    if cnfg.Exists('work_dir'):
+        work_dir = cnfg.Read('work_dir')
+    else:
+        work_dir = '/scratch/{username}/CellProfiler/'
+    return work_dir
+
+def cluster_url():
+    cnfg = wx.Config('CPRynner')
+    if cnfg.Exists('cluster_address'):
+        cluster_address = cnfg.Read('cluster_address')
+    else:
+        cluster_address = 'sunbird.swansea.ac.uk'
+    return cluster_address
 
 def cluster_max_runtime():
     cnfg = wx.Config('CPRynner')
@@ -210,7 +218,10 @@ def cluster_max_runtime():
     return int(max_runtime)
 
 def update_cluster_parameters():
-    cluster_address, tasks_per_node, work_dir, setup_script = cluster_parameters()
+    cluster_address = cluster_url()
+    work_dir = cluster_work_dir()
+    tasks_per_node = cluster_tasks_per_node()
+    setup_script = cluster_setup_script()
     dialog = clusterSettingDialog( cluster_address, tasks_per_node, work_dir, setup_script )
     result = dialog.ShowModal()
     if result == wx.ID_OK:
@@ -233,7 +244,9 @@ def update_cluster_parameters():
 def _create_rynner():
     ''' Create an instance of Rynner connected to the cluster
     '''
-    hostname, tasks_per_node, work_dir, setup_script = cluster_parameters()
+    hostname = cluster_url()
+    work_dir = cluster_work_dir()
+    tasks_per_node = cluster_tasks_per_node()
     username, password = _get_username_and_password()
     if username is not None:
 

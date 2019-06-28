@@ -226,9 +226,9 @@ class ClusterviewFrame(wx.Frame):
         self.runs = []
 
     def on_cluster_settings_click(self, event):
-        cluster_address_orig, _, _, _ = CPRynner.cluster_parameters()
+        cluster_address_orig = CPRynner.cluster_url()
         CPRynner.update_cluster_parameters()
-        cluster_address_new, _, _, _ = CPRynner.cluster_parameters()
+        cluster_address_new = CPRynner.cluster_url()
 
         if cluster_address_orig != cluster_address_new:
             CPRynner.logout()
