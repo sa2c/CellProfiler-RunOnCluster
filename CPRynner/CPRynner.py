@@ -34,7 +34,7 @@ class clusterSettingDialog(wx.Dialog):
         cluster_address_sizer = wx.BoxSizer(wx.HORIZONTAL)
         cluster_address_label = wx.StaticText(self.panel, label="Cluster Address:", size=(100, -1))
         cluster_address_label.SetToolTip(wx.ToolTip(
-            "The url of the cluster. If logged in, changing this will cause you to logout."
+            "The URL of the cluster. If logged in, changing this will cause you to logout."
         ))
         cluster_address_sizer.Add(cluster_address_label, 0, wx.ALL|wx.CENTER, 5, )
         self.cluster_address = wx.TextCtrl(self.panel, value = cluster_address, size=(300, -1))
@@ -65,7 +65,7 @@ class clusterSettingDialog(wx.Dialog):
         work_dir_sizer = wx.BoxSizer(wx.HORIZONTAL)
         work_dir_label = wx.StaticText(self.panel, label="Working Directory:", size=(100, -1))
         work_dir_label.SetToolTip(wx.ToolTip(
-            "Path to the directory in which the job will be run. The {username} tag will be replaced by your username on the cluster and is usefull when multiple people use the same machine."
+            "Path to the directory in which the job is run. The {username} tag is replaced by your username on the cluster and is useful when multiple people use the same local machine."
         ))
         work_dir_sizer.Add(work_dir_label, 0, wx.ALL|wx.CENTER, 5)
         self.work_dir = wx.TextCtrl(self.panel, value = work_dir, size=(300, -1))
@@ -75,7 +75,7 @@ class clusterSettingDialog(wx.Dialog):
         setup_script_label_sizer = wx.BoxSizer(wx.HORIZONTAL)
         setup_script_label = wx.StaticText(self.panel, label="Setup Script:", size=(100, -1))
         setup_script_label.SetToolTip(wx.ToolTip(
-            "Will be at the beginning of the all jobs. Can be any general bash script, but may be limited by the cluster. For example, compute nodes often lack internet access and cannot install python packages."
+            "Run at the start of each job. Used for setting up the run, for example loading the CellProfiler module. Can be any general bash script, but may be limited by the cluster. For example, compute nodes often lack internet access and cannot install python packages."
         ))
         setup_script_label_sizer.Add(setup_script_label, 0, wx.ALL|wx.CENTER, 5)
 
