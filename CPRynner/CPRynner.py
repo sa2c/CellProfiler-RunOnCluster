@@ -112,7 +112,6 @@ class clusterSettingDialog(wx.Dialog):
         self.panel.SetSizer(main_sizer)
 
 
-
 class LoginDialog(wx.Dialog):
     """
     A dialog window asking for a username and a password
@@ -121,6 +120,7 @@ class LoginDialog(wx.Dialog):
     def __init__(self, username = ''):
         """Constructor"""
         super(LoginDialog, self).__init__(None, title="Login", size = (300,180))
+
 
         self.panel = wx.Panel(self)
 
@@ -171,6 +171,14 @@ class LoginDialog(wx.Dialog):
 
 def _get_username_and_password():
     cnfg = wx.Config('CPRynner')
+
+    if cnfg.Read('cluster_address') == '':
+        wx.MessageBox(
+            "The cluster address is not set. Please edit the cluster settings.",
+            caption="Cluster Required",
+            style=wx.OK | wx.ICON_INFORMATION)
+        update_cluster_parameters()
+
     if cnfg.Exists('username'):
         username = cnfg.Read('username')
     else:
