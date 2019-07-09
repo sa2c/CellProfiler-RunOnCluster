@@ -203,7 +203,7 @@ def cluster_tasks_per_node():
     if cnfg.Exists('tasks_per_node'):
         tasks_per_node = cnfg.Read('tasks_per_node')
     else:
-        tasks_per_node = '40'
+        tasks_per_node = ''
     return tasks_per_node
 
 def cluster_setup_script():
@@ -229,7 +229,7 @@ def cluster_url():
     if cnfg.Exists('cluster_address'):
         cluster_address = cnfg.Read('cluster_address')
     else:
-        cluster_address = 'sunbird.swansea.ac.uk'
+        cluster_address = ''
     return cluster_address
 
 def cluster_max_runtime():
@@ -237,7 +237,7 @@ def cluster_max_runtime():
     if cnfg.Exists('max_runtime'):
         max_runtime = cnfg.Read('max_runtime')
     else:
-        max_runtime = '72'
+        max_runtime = ''
     return int(max_runtime)
 
 def update_cluster_parameters():

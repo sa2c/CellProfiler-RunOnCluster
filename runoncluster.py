@@ -122,7 +122,11 @@ class RunOnCluster(cpm.Module):
             doc = "Enter a project code of an Supercomputing Wales project you wish to run under. This can be left empty if you have only one project.",
         )
 
-        self.cluster_settings_button = cps.DoSomething("", "Cluster Settings", update_cluster_parameters)
+        self.cluster_settings_button = cps.DoSomething("",
+            "Cluster Settings",
+            update_cluster_parameters,
+            doc = "Change cluster and edit cluster settings."
+        )
 
         self.batch_mode = cps.Binary("Hidden: in batch mode", False)
         self.revision = cps.Integer("Hidden: revision number", 0)
@@ -200,7 +204,7 @@ class RunOnCluster(cpm.Module):
             rynner = CPRynner()
             if rynner is not None:
                 # Get parameters
-                max_tasks = cluster_tasks_per_node()
+                max_tasks = int(cluster_tasks_per_node())
                 setup_script = cluster_setup_script()
 
                 # Set walltime
@@ -285,11 +289,15 @@ class RunOnCluster(cpm.Module):
 
 
                 # Define the job to run
+                script = '{}; printf %s\\\\n {{0..{}}} | xargs -P 40 -n 1 -IX bash -c "cd runX ; ./cellprofiler_runX; ";'.format(
+                    setup_script, n_image_groups-1
+                )
+                script = script.replace('\r\n','\n')
+                script = script.replace(';;', ';')
+                print(script)
                 run = rynner.create_run( 
                     jobname = self.runname.value.replace(' ','_'),
-                    script = '{}; printf %s\\\\n {{0..{}}} | xargs -P 40 -n 1 -IX bash -c "cd runX ; ./cellprofiler_runX; ";'.format(
-                        setup_script, n_image_groups-1
-                    ),
+                    script = script,
                     uploads = uploads,
                     downloads =  downloads,
                 )
@@ -335,7 +343,7 @@ class RunOnCluster(cpm.Module):
                                       "the last in the pipeline.",
                                       self.runname)
         
-        max_runtime = cluster_max_runtime()
+        max_runtime = int(cluster_max_runtime())
         if self.max_walltime.value >= max_runtime:
             raise cps.ValidationError( 
                 "The maximum runtime must be less than "+str(max_runtime)+" hours.",
