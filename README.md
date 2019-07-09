@@ -1,11 +1,12 @@
-# CellProfiler-RunOnCluster
+# CellProfiler-RunOnCluster 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3275888.svg)](https://doi.org/10.5281/zenodo.3275888)
 
 A CellProfiler module for submitting batch jobs to a cluster running slurm.
 
 ## Installation
 ### Windows
 
-A precompiled executable is provided in [releases](https://github.com/sa2c/CellProfiler-RunOnCluster/releases/download/v0.0.2/CellProfiler.exe). These executables require that a Java Runtime Environment is installed. You can get one for example form the [Java downloads page](https://www.java.com/en/download/). 
+A precompiled executable is provided in [releases](https://github.com/sa2c/CellProfiler-RunOnCluster/releases/download/v1.0/CellProfiler.exe). These executables require that a Java Runtime Environment is installed. You can get one for example form the [Java downloads page](https://www.java.com/en/download/). 
 
 ### Source Installation
 
