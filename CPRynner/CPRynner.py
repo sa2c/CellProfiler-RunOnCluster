@@ -212,7 +212,7 @@ def cluster_setup_script():
         setup_script = cnfg.Read('setup_script')
     else:
         setup_script = """\
-source /home/s.j.m.o.rantaharju/CellProfiler/bin/activate;
+source /apps/local/life-sciences/CellProfiler/bin/activate;
 module load java;"""
     return setup_script
 
