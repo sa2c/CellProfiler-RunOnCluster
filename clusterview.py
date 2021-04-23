@@ -403,44 +403,43 @@ class ClusterviewFrame(wx.Frame):
         if answer == wx.ID_YESTOALL:
             self.yes_to_all_clicked = True
         return True
-        
 
-    def handle_csv( self, source, destination ):
-        ''' Write the data rows of a csv file into an existing csv file.
-            Fix image numbering before writing '''
+    @staticmethod
+    def handle_csv(source, destination):
+        """ Write the data rows of a csv file into an existing csv file.
+            Fix image numbering before writing """
 
-        # First check if the file contains the image number
-        outfile = open(destination,"rb")
-        header = outfile.next()
-        has_image_num = False
-        for index, cell in enumerate(header.split(',')):
-            if cell == 'ImageNumber':
-                image_num_cell = index
-                has_image_num = True
+        has_image_num, image_num_cell = False, None
+        with open(destination, "r") as f:
+            # First check if the file contains the image number
+            reader = csv.reader(f)
+            header = next(reader)
+            body = list(reader)
+            for index, cell in enumerate(header.split(',')):
+                if cell == 'ImageNumber':
+                    image_num_cell, has_image_num = index, True
 
-        # If the image number is included, find the largest value
-        if has_image_num:
-            last_image_num = 1
-            for row in outfile:
-                image_num = int(row.split(',')[image_num_cell])
-                last_image_num = max(image_num, last_image_num)
-        outfile.close()
-
-        # Read the source file and write row by row to the destination
-        infile = open(source, 'rb')
-        infile.next()
-        outfile = open(destination,"ab")
-        for row in infile:
-            # If the image number is included, correct the number
+            # If the image number is included, find the largest value
             if has_image_num:
-                cells = row.split(',')
-                local_num = int(cells[image_num_cell])
-                cells[image_num_cell] = str(image_num+local_num)
-                row = ','.join(cells)
-            outfile.write(row)
-        outfile.close()
-        infile.close()
-                
+                last_image_num = 1
+                for row in body:
+                    image_num = int(row.split(',')[image_num_cell])
+                    last_image_num = max(image_num, last_image_num)
+
+        with open(source, "r") as in_, open(destination, "a") as out_:
+            # Read the source file and write row by row to the destination
+            reader, writer = csv.reader(in_), csv.writer(out_)
+            next(reader)
+            body = list(reader)
+            for row in body:
+                # If the image number is included, correct the number
+                if has_image_num:
+                    cells = row.split(',')
+                    local_num = int(cells[image_num_cell])
+                    cells[image_num_cell] = str(image_num + local_num)
+                    row = ','.join(cells)
+                writer.writerow(row)
+
 
 class clusterView(cpm.Module):
     module_name = "ClusterView"
