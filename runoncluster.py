@@ -54,7 +54,7 @@ class RunOnCluster(Module):
     variable_revision_number = 10
 
     def __init__(self):
-
+        super().__init__()
         self.runname = None
         self.n_images_per_measurement = None
         self.type_first = None

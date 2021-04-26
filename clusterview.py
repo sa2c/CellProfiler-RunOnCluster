@@ -47,8 +47,7 @@ class YesToAllMessageDialog(wx.Dialog):
     """
 
     def __init__(self, parent, message, title):
-        super(YesToAllMessageDialog, self).__init__(parent, title=title,
-                                                    size=(310, 210))
+        super().__init__(parent, title=title, size=(310, 210))
         self.panel = wx.Panel(self)
 
         # First the message text        
@@ -104,8 +103,7 @@ class ClusterviewFrame(wx.Frame):
 
     def __init__(self, parent, title):
         # First update runs, then create the window
-        super(ClusterviewFrame, self).__init__(parent, title=title,
-                                               size=(400, 400))
+        super().__init__(parent, title=title, size=(400, 400))
 
         self.panel = None
         self.vbox = None
@@ -487,6 +485,7 @@ class ClusterView(Module):
     variable_revision_number = 1
 
     def __init__(self):
+        super().__init__()
         self.pipelineinfo = None
 
     @classmethod

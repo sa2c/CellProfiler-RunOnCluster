@@ -27,8 +27,7 @@ class ClusterSettingDialog(wx.Dialog):
 
     def __init__(self, cluster_address, tasks_per_node, work_dir, setup_script):
         """Constructor"""
-        super(ClusterSettingDialog, self).__init__(None, title="Login",
-                                                   size=(420, 480))
+        super().__init__(None, title="Login", size=(420, 480))
 
         self.panel = wx.Panel(self)
 
@@ -148,7 +147,7 @@ class LoginDialog(wx.Dialog):
 
     def __init__(self, username=''):
         """Constructor"""
-        super(LoginDialog, self).__init__(None, title="Login", size=(300, 180))
+        super().__init__(None, title="Login", size=(300, 180))
 
         self.panel = wx.Panel(self)
 
