@@ -29,6 +29,8 @@ import timeago
 import wx
 import csv
 
+import wx.lib.scrolledpanel as scroller
+
 from datetime import datetime as dt
 
 from cellprofiler_core.preferences import get_default_output_directory
@@ -120,7 +122,7 @@ class ClusterviewFrame(wx.Frame):
 
     def InitUI(self):
         # The containers in the window are organised here
-        self.panel = wx.lib.scrolledpanel.ScrolledPanel(self)
+        self.panel = scroller.ScrolledPanel(self)
         self.panel.SetBackgroundColour('#ededed')
         self.vbox = wx.BoxSizer(wx.VERTICAL)
 
@@ -300,9 +302,7 @@ class ClusterviewFrame(wx.Frame):
         for runfolder, localdir in run.downloads:
             self.handle_result_file(
                 os.path.join(localdir, runfolder, 'results'),
-                target_directory,
-                has_been_downloaded
-            )
+                target_directory, has_been_downloaded)
 
         # Set a flag marking the run downloaded
         run['downloaded'] = True
@@ -498,8 +498,7 @@ class ClusterView(Module):
     def create_settings(self):
         self.pipelineinfo = HTMLText(
             "",
-            "Use the 'Data Tools' menu to open the Cluster View",
-            size=(2, 2))
+            "Use the 'Data Tools' menu to open the Cluster View", size=(2, 2))
 
     def settings(self):
         return [self.pipelineinfo]

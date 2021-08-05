@@ -10,11 +10,11 @@ import tempfile
 import os
 
 import wx
-from rynner.rynner import Rynner
-from libsubmit import SSHChannel
-from libsubmit.providers.slurm.slurm import SlurmProvider
-from libsubmit.launchers.launchers import SimpleLauncher
-from libsubmit.channels.errors import SSHException
+from rynner.core import Rynner
+from parsl.channels import SSHChannel
+from parsl.providers import SlurmProvider
+from parsl.launchers import SimpleLauncher
+from parsl.channels.errors import SSHException
 
 workdir = tempfile.mkdtemp()
 os.chdir(workdir)
