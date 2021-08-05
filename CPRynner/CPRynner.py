@@ -42,7 +42,7 @@ class ClusterSettingDialog(wx.Dialog):
         cluster_address_sizer.Add(cluster_address_label, 0, wx.ALL | wx.CENTER,
                                   5)
         self.cluster_address = wx.TextCtrl(self.panel, value=cluster_address,
-                                           size=(300, -1))
+                                           size=(300, -1), style=wx.TE_PROCESS_ENTER)
         cluster_address_sizer.Add(self.cluster_address, 0, wx.ALL, 5)
 
         # tasks_per_node field
@@ -82,7 +82,8 @@ class ClusterSettingDialog(wx.Dialog):
                f"machine.")
         work_dir_label.SetToolTip(wx.ToolTip(msg))
         work_dir_sizer.Add(work_dir_label, 0, wx.ALL | wx.CENTER, 5)
-        self.work_dir = wx.TextCtrl(self.panel, value=work_dir, size=(300, -1))
+        self.work_dir = wx.TextCtrl(self.panel, value=work_dir, size=(300, -1),
+                                    style=wx.TE_PROCESS_ENTER)
         work_dir_sizer.Add(self.work_dir, 0, wx.ALL, 5)
 
         # setup_script field

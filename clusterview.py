@@ -486,7 +486,6 @@ class ClusterView(Module):
 
     def __init__(self):
         super().__init__()
-        self.pipelineinfo = None
 
     @classmethod
     def is_input_module(cls):
