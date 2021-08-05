@@ -51,20 +51,10 @@ logger = logging.getLogger(__name__)
 class RunOnCluster(Module):
     module_name = "RunOnCluster"
     category = 'Other'
-    variable_revision_number = 10
+    variable_revision_number = 9
 
     def __init__(self):
         super().__init__()
-        self.runname = None
-        self.n_images_per_measurement = None
-        self.type_first = None
-        self.is_archive = None
-        self.measurements_in_archive = None
-        self.max_walltime = None
-        self.account = None
-        self.cluster_settings_button = None
-        self.batch_mode = None
-        self.revision = None
 
     def update_settings(self, setting: list):
         pass
@@ -433,23 +423,3 @@ class RunOnCluster(Module):
             return h5_path
         finally:
             m.close()
-
-    def upgrade_settings(self, setting_values, variable_revision_number,
-                         from_matlab):
-        # The first version of this module was created for CellProfiler
-        # version 8. 
-
-        if from_matlab and variable_revision_number == 8:
-            # There is no matlab implementation
-            raise NotImplementedError(
-                "Attempting to import RunOnCluster from Matlab.")
-
-        if (not from_matlab) and variable_revision_number == 8:
-            pass
-
-        if variable_revision_number < 8:
-            # There are no older implementations
-            raise NotImplementedError(
-                "Importing unkown version of RunOnCluster.")
-
-        return setting_values, variable_revision_number, from_matlab
