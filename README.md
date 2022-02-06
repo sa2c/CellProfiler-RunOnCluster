@@ -16,7 +16,17 @@ Follow the instructions for installing CellProfiler on the [wiki](https://github
 
 In the plugins directory, install the additional requirements for the plugins:
 ```
-python2 -m pip install -r requirements.txt
+pip install git+https://github.com/sa2c/Rynner.git
+```
+
+Install ``numpy`` module if you don't have.
+```
+pip install numpy
+```
+
+Then,
+```
+python -m pip install -r requirements.txt
 ```
 
 ## Usage
