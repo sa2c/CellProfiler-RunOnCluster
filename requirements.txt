@@ -1,4 +1,4 @@
--e git://github.com/sa2c/Rynner.git # Rynner
+# -e git://github.com/sa2c/Rynner.git # Rynner
 cellprofiler>=4.2.0
 cellprofiler_core>=4.2.0
 timeago>=1.0.15
