@@ -1,7 +1,7 @@
 # CellProfiler-RunOnCluster 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3275888.svg)](https://doi.org/10.5281/zenodo.3275888)
 
-A CellProfiler module for submitting batch jobs to a cluster running slurm.
+A CellProfiler module for submitting batch jobs to a cluster running Slurm.
 
 ## Installation
 ### Windows
