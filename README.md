@@ -5,22 +5,22 @@ A CellProfiler module for submitting batch jobs to a cluster running slurm.
 
 ## Installation
 ### Windows
-Currently testing CellProfiler 4.2.1 (https://cellprofiler.org/releases) on Windows with Python 3.8.
+Currently testing CellProfiler 4.2.1 (https://cellprofiler.org/releases) on Windows 10 with Python 3.8.
 
-A precompiled executable with default settings for the Sunbird cluster in Swansea is provided in [releases](https://github.com/sa2c/CellProfiler-RunOnCluster/releases/download/v1.0/CellProfiler.exe). These executables require that a Java Runtime Environment is installed. You can get one for example form the [Java downloads page](https://www.java.com/en/download/). 
+Previously, a precompiled executable with default settings for the Sunbird cluster in Swansea was provided in [releases](https://github.com/sa2c/CellProfiler-RunOnCluster/releases/download/v1.0/CellProfiler.exe). These executables require that a Java Runtime Environment is installed. You can get one for example form the [Java downloads page](https://www.java.com/en/download/). 
 
 ### Source Installation
 
 When running on Linux or developing your own plugins, the most straight forward method is to copy the plugin sources to your Cellprofiler plugins directory.
 
-Follow the instructions for installing CellProfiler on the [wiki](https://github.com/CellProfiler/CellProfiler/wiki). Choose you operating system on the right side panel. Once you have installed CellProfiler, set the plugins directory in Cellprofiler preferences. Download [the plugins](https://github.com/sa2c/CellProfiler-RunOnCluster/archive/master.zip) and copy move the files to your plugins directory.
+Follow the instructions for installing CellProfiler on the [wiki](https://github.com/CellProfiler/CellProfiler/wiki). Choose you operating system on the right side panel. Once you have installed CellProfiler, set the plugins directory in Cellprofiler preferences. Download [the plugins](https://github.com/sa2c/CellProfiler-RunOnCluster/archive/master.zip) and move the files to your plugins directory.
 
 In the plugins directory, install the additional requirements for the plugins:
 ```
 pip install git+https://github.com/sa2c/Rynner.git
 ```
 
-Install ``numpy`` module if you don't have.
+*Install ``numpy`` module if you don't have.
 ```
 pip install numpy
 ```
