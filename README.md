@@ -5,7 +5,7 @@ A CellProfiler module for submitting batch jobs to a cluster running slurm.
 
 ## Installation
 ### Windows
-Currently testing Version 4.2.1 (https://cellprofiler.org/releases) on Windows with Python 3.8.
+Currently testing CellProfiler 4.2.1 (https://cellprofiler.org/releases) on Windows with Python 3.8.
 
 A precompiled executable with default settings for the Sunbird cluster in Swansea is provided in [releases](https://github.com/sa2c/CellProfiler-RunOnCluster/releases/download/v1.0/CellProfiler.exe). These executables require that a Java Runtime Environment is installed. You can get one for example form the [Java downloads page](https://www.java.com/en/download/). 
 
