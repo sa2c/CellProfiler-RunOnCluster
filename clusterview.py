@@ -16,7 +16,6 @@ Supports 2D? Supports 3D? Respects masks?
 YES          YES          NO
 ============ ============ ===============
 
-
 """
 
 import logging
@@ -535,8 +534,8 @@ class ClusterView(Module):
         pass
 
     def upgrade_settings(self, setting_values, variable_revision_number,
-                         from_matlab):
-        return setting_values, variable_revision_number, from_matlab
+                         module_name):
+        return setting_values, variable_revision_number
 
     def volumetric(self):
         return True
