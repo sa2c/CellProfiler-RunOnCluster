@@ -15,8 +15,8 @@ When running on Linux or developing your own plugins, the most straight forward 
 
 Follow the instructions for installing CellProfiler on the [Wiki](https://github.com/CellProfiler/CellProfiler/wiki). Choose you operating system on the right side panel. Once you have installed CellProfiler, set the plugins directory in Cellprofiler preferences. 
 
-### Plugins
-Download [Plugins](https://github.com/sa2c/CellProfiler-RunOnCluster/archive/project_update.zip) and move the files to your plugins directory.
+### Loading Plugins
+Download [Plugins](https://github.com/sa2c/CellProfiler-RunOnCluster/archive/project_update.zip) and move the files to your plugins directory. Please note the plugins are being modified for CellProfiler 4.
 
 In the plugins directory, install the additional requirements for the plugins:
 ```
