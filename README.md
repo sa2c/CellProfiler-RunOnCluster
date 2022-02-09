@@ -13,7 +13,7 @@ Previously, a precompiled executable with default settings for the Sunbird clust
 When running on Linux or developing your own plugins, the most straight forward method is to copy the plugin sources to your Cellprofiler plugins directory. Follow the instructions for installing CellProfiler on the [Wiki](https://github.com/CellProfiler/CellProfiler/wiki). Choose you operating system on the right side panel. Once you have installed CellProfiler, set the plugins directory in Cellprofiler preferences. 
 
 ### Loading Plugins
-Download [Plugins](https://github.com/sa2c/CellProfiler-RunOnCluster/archive/project_update.zip) and move the files to your plugins directory. Please note the plugins are being modified for CellProfiler 4.
+Download [Plugins](https://github.com/sa2c/CellProfiler-RunOnCluster/archive/CellProfiler4.zip) and move the files to your plugins directory. Please note the plugins ``clusterview`` and ``runoncluster`` are being modified and tested for CellProfiler 4.
 
 In the plugins directory, install the [Rynner](https://github.com/sa2c/Rynner) module and additional requirements for the plugins:
 ```
