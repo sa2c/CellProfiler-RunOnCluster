@@ -1,5 +1,3 @@
-# coding=utf-8
-
 """
 ClusterView
 =============
@@ -15,18 +13,22 @@ Supports 2D? Supports 3D? Respects masks?
 ============ ============ ===============
 YES          YES          NO
 ============ ============ ===============
-
 """
-
-import logging
 
 import os
 import time
 import shutil
 import tempfile
+# Modifications
+import sys
+sys.path.append('C:\\Users\\tianyi.pan\\AppData\\Local\\Programs\\Python\\Python38\\Lib\\site-packages')
+# End
 import timeago
 import wx
 import csv
+# Debuging
+import pdb
+pdb.set_trace()
 
 import wx.lib.scrolledpanel as scroller
 
@@ -38,8 +40,8 @@ from cellprofiler_core.setting import HTMLText
 
 import CPRynner.CPRynner as CPRynner
 
-logger = logging.getLogger(__package__)
-
+import logging
+logger = logging.getLogger(__package__) 
 
 class YesToAllMessageDialog(wx.Dialog):
     """
@@ -533,7 +535,7 @@ class ClusterView(Module):
         """
         pass
 
-    def upgrade_settings(self, setting_values, variable_revision_number,
+    def upgrade_settings(self,setting_values,variable_revision_number,
                          module_name):
         return setting_values, variable_revision_number
 
