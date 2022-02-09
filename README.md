@@ -15,13 +15,9 @@ When running on Linux or developing your own plugins, the most straight forward 
 ### Loading Plugins
 Download [Plugins](https://github.com/sa2c/CellProfiler-RunOnCluster/archive/project_update.zip) and move the files to your plugins directory. Please note the plugins are being modified for CellProfiler 4.
 
-In the plugins directory, install the [Rynner module](https://github.com/sa2c/Rynner) and additional requirements for the plugins:
+In the plugins directory, install the [Rynner](https://github.com/sa2c/Rynner) module and additional requirements for the plugins:
 ```
 pip install git+https://github.com/sa2c/Rynner.git
-```
-
-Then,
-```
 python -m pip install -r requirements.txt
 ```
 
