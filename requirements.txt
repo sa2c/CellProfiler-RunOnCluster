@@ -1,6 +1,7 @@
 # -e git://github.com/sa2c/Rynner.git # Rynner
 cellprofiler>=4.2.1
 cellprofiler_core>=4.2.1
+numpy==1.22.2
 timeago>=1.0.15
 wxPython>=4.1.0
 parsl>=1.1.0
