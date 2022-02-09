@@ -21,10 +21,15 @@ Supports 2D? Supports 3D? Respects masks?
 ============ ============ ===============
 YES          YES          NO
 ============ ============ ===============
-
 """
 
 import os
+
+# Modifications
+import sys
+sys.path.append('C:\\Users\\tianyi.pan\\AppData\\Local\\Programs\\Python\\Python38\\Lib\\site-packages')
+# End
+
 import re
 import logging
 import wx
