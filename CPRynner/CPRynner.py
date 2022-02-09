@@ -3,12 +3,11 @@ Creates an instance of Rynner to be shared between the
 clusterview and runnoncluster plugins.
 """
 
-
 # Libsubmit creates a .script file in the working directory.
 # To avoid clutter, we run in a temp directory
+
 import tempfile
 import os
-
 import wx
 from rynner.core import Rynner
 from parsl.channels import SSHChannel
@@ -19,12 +18,11 @@ from parsl.channels.errors import SSHException
 workdir = tempfile.mkdtemp()
 os.chdir(workdir)
 
-
 class ClusterSettingDialog(wx.Dialog):
     """
     A dialog window for setting cluster parameters
     """
-
+    
     def __init__(self, cluster_address, tasks_per_node, work_dir, setup_script):
         """Constructor"""
         super().__init__(None, title="Login", size=(420, 480))
@@ -204,7 +202,7 @@ class LoginDialog(wx.Dialog):
     def settings():
         update_cluster_parameters()
 
-
+        
 def _get_username_and_password():
     cnfg = wx.Config('CPRynner')
 
