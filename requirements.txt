@@ -39,7 +39,7 @@ numpy==1.16.1
 packaging==19.0
 paramiko==2.4.2
 pathlib==1.0.1
-Pillow==8.1.1
+Pillow==9.0.1
 prokaryote==2.4.1
 pyasn1==0.4.5
 pycparser==2.19
