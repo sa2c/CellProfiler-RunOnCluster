@@ -1,21 +1,20 @@
 # CellProfiler-RunOnCluster 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3275888.svg)](https://doi.org/10.5281/zenodo.3275888)
 
-A CellProfiler module for submitting batch jobs to a cluster running Slurm.
+A CellProfiler module for submitting batch jobs to a cluster running Slurm. Currently testing [CellProfiler 4.2.1](https://cellprofiler.org/releases) with Python 3.8 on Windows 10.
 
 ## Installation
 ### Windows
-Currently testing [CellProfiler 4.2.1](https://cellprofiler.org/releases) on Windows 10 with Python 3.8.
-
-Previously, a precompiled executable with default settings for the SCW Sunbird cluster in Swansea can be found in [releases](https://github.com/sa2c/CellProfiler-RunOnCluster/releases/download/v1.0/CellProfiler.exe). These executables require that a Java Runtime Environment is installed. You can get one for example form [Java](https://www.java.com/en/download/). 
+Note as our plugin requires additional libraries which aren’t packaged with CellProfiler 4.2.1, you’ll need to build CellProfiler from source rather than using a pre-packaged version ([Reference](https://cellprofiler-manual.s3.amazonaws.com/CellProfiler-4.0.6/help/other_plugins.html?highlight=plugins)).
 
 ### Source Installation
-When running on Linux or developing your own plugins, the most straight forward method is to copy the plugin sources to your Cellprofiler plugins directory. Follow the instructions for installing CellProfiler on the [Wiki](https://github.com/CellProfiler/CellProfiler/wiki). Choose you operating system on the right side panel. Once you have installed CellProfiler, set the plugins directory in Cellprofiler preferences. 
+When running on Linux or developing your own plugins, the most straight forward method is to copy the plugin sources to your Cellprofiler plugins directory. 
+[CellProfiler 3 to 4 migration guide](https://github.com/CellProfiler/CellProfiler-plugins/wiki/CellProfiler-3-to-4-migration-guide) and [Orientation to CellProfiler code](https://github.com/CellProfiler/CellProfiler/wiki/Orientation-to-CellProfiler-code) are some useful guidlines of developing CellProfiler plugins. Follow the instructions for installing CellProfiler on the [Wiki](https://github.com/CellProfiler/CellProfiler/wiki). Choose you operating system on the right side panel. Once you have installed CellProfiler, set the plugins directory in Cellprofiler preferences. 
 
 ### Plugins
-Previous [Plugins](https://github.com/sa2c/CellProfiler-RunOnCluster/archive/master.zip) only work with the precompiled CellProfiler executable (version 3.X.X) mentioned above. Please download the latest [Plugins](https://github.com/sa2c/CellProfiler-RunOnCluster/archive/CellProfiler4.zip) from this branch and move the files to your plugins directory. Please note the latest plugins, ``clusterview`` and ``runoncluster``, are being tested for CellProfiler 4.
+[Previous plugins](https://github.com/sa2c/CellProfiler-RunOnCluster/archive/master.zip) only work with the precompiled CellProfile executable (version 3.X.X) with default settings for the SCW Sunbird cluster can be found in [releases](https://github.com/sa2c/CellProfiler-RunOnCluster/releases/download/v1.0/CellProfiler.exe). These executables require that a Java Runtime Environment is installed. You can get one for example form [Java](https://www.java.com/en/download/). 
 
-In the plugins directory, install the [Rynner](https://github.com/sa2c/Rynner) module and additional requirements for the plugins:
+Please download the [latest plugins](https://github.com/sa2c/CellProfiler-RunOnCluster/archive/CellProfiler4.zip) from this branch and move the files to your plugins directory. In the plugins directory, install the [Rynner](https://github.com/sa2c/Rynner) module and additional requirements for the plugins:
 ```
 pip install git+https://github.com/sa2c/Rynner.git
 python -m pip install -r requirements.txt
