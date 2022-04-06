@@ -5,7 +5,7 @@ A CellProfiler module for submitting batch jobs to a cluster running Slurm. Curr
 
 ## Installation
 ### Windows
-Note as our plugin requires additional libraries which aren’t packaged with CellProfiler 4.2.1, you’ll need to build CellProfiler from source rather than using a pre-packaged version ([Reference](https://cellprofiler-manual.s3.amazonaws.com/CellProfiler-4.0.6/help/other_plugins.html?highlight=plugins)).
+Note as our plugin requires additional libraries which aren’t packaged with CellProfiler 4.2.1, you’ll need to build CellProfiler from source rather than using a pre-packaged version. ([Reference](https://cellprofiler-manual.s3.amazonaws.com/CellProfiler-4.0.6/help/other_plugins.html?highlight=plugins))
 
 ### Source Installation
 When running on Linux or developing your own plugins, the most straight forward method is to copy the plugin sources to your Cellprofiler plugins directory. 
