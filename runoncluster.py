@@ -23,29 +23,25 @@ YES          YES          NO
 ============ ============ ===============
 """
 
-import os
-import re
-import wx
+import os, time, re
+from future import *
 import logging
 logger = logging.getLogger(__name__)
+import numpy as np
+import wx
 
 #import sys
 #sys.path.append('C:\\Users\\tianyi.pan\\AppData\\Local\\Programs\\Python\\Python38\\Lib\\site-packages')
 
 import cellprofiler_core
-from cellprofiler_core.module import Module
-from cellprofiler_core.setting import Binary, ValidationError
-from cellprofiler_core.setting.text import Integer, Text
-from cellprofiler_core.setting.do_something import DoSomething
-from cellprofiler_core.preferences import get_default_output_directory
-from cellprofiler_core.measurement import Measurements
-from cellprofiler_core.workspace import Workspace
-from cellprofiler_core.pipeline import Pipeline
-from cellprofiler_core.constants.measurement import F_BATCH_DATA_H5
+import cellprofiler_core.module as cpm
+import cellprofiler_core.measurement as cpmeas
+import cellprofiler_core.pipeline as cpp
+import cellprofiler_core.setting as cps
+import cellprofiler_core.preferences as cpprefs
+import cellprofiler_core.workspace as cpw
 
-# Debuging
-#import pdb
-#pdb.set_trace()
+from cellprofiler_core.constants.measurement import F_BATCH_DATA_H5
 
 from CPRynner.CPRynner import CPRynner
 from CPRynner.CPRynner import update_cluster_parameters
@@ -53,8 +49,7 @@ from CPRynner.CPRynner import cluster_tasks_per_node
 from CPRynner.CPRynner import cluster_setup_script
 from CPRynner.CPRynner import cluster_max_runtime
 
-
-class RunOnCluster(Module):
+class RunOnCluster(cpm.Module):
     module_name = "RunOnCluster"
     category = 'Other'
     variable_revision_number = 9
@@ -95,43 +90,43 @@ class RunOnCluster(Module):
 
         doc_ = (f"Enter a recognizable identifier for the run "
                 f"(spaces will be replaced by undescores)")
-        self.runname = Text("Run Name", "Run_name", doc=doc_)
+        self.runname = cps.text.Text("Run Name", "Run_name", doc=doc_)
 
         doc_ = (f"The number of image files in each measurement that must be "
                 f"present for the pipeline to run correctly. This is usually "
                 f"the number of image types in the NamesAndTypes module.")
-        self.n_images_per_measurement = Integer(
+        self.n_images_per_measurement = cps.text.Integer(
             "Number of images per measurement", 1, minval=1, doc=doc_)
 
         doc_ = (f"Wether the images are ordered by image type first. "
                 f"If not, ordering by measurement first is assumed.")
-        self.type_first = Binary(text="Image type first", value=True, doc=doc_)
+        self.type_first = cps.Binary(text="Image type first", value=True, doc=doc_)
 
         doc_ = (f"Set to Yes if the the images are included as a single image "
                 f"archive, such as an Ism file.")
-        self.is_archive = Binary(text="Is image archive", value=False, doc=doc_)
+        self.is_archive = cps.Binary(text="Is image archive", value=False, doc=doc_)
 
         doc_ = "The number of measurements in the archive file."
-        self.measurements_in_archive = Integer(
+        self.measurements_in_archive = cps.text.Integer(
             "Number of measurements in the archive", 1, minval=1, doc=doc_)
 
         doc_ = (f"The maximum time for reserving a node  on the cluster. Should"
                 f" be higher than the actual runtime, or the run may not "
                 f"complete. Runs with lower values will pass the queue "
                 f"more quickly.")
-        self.max_walltime = Integer("Maximum Runtime (hours)", 24, doc=doc_)
+        self.max_walltime = cps.text.Integer("Maximum Runtime (hours)", 24, doc=doc_)
 
         doc_ = (f"Enter a project code of an Supercomputing Wales project you "
                 f"wish to run under. This can  be left empty if you have only "
                 f"one project.")
-        self.account = Text("Project Code", "", doc=doc_)
+        self.account = cps.text.Text("Project Code", "", doc=doc_)
 
         doc_ = "Change cluster and edit cluster settings."
-        self.cluster_settings_button = DoSomething(
+        self.cluster_settings_button = cps.do_something.DoSomething(
             "", "Cluster Settings", update_cluster_parameters, doc=doc_)
 
-        self.batch_mode = Binary("Hidden: in batch mode", False)
-        self.revision = Integer("Hidden: revision number", 0)
+        self.batch_mode = cps.Binary("Hidden: in batch mode", False)
+        self.revision = cps.text.Integer("Hidden: revision number", 0)
 
     def settings(self):
         result = [
@@ -271,7 +266,7 @@ class RunOnCluster(Module):
 
                 # The runs are downloaded in their separate folders.
                 # They can be processed later
-                output_dir = get_default_output_directory()
+                output_dir = cpprefs.get_default_output_directory()
                 downloads = [[f"run{g}", output_dir] for g in
                              range(n_image_groups)]
 
@@ -361,25 +356,25 @@ class RunOnCluster(Module):
         """Make sure the module settings are valid"""
         # This must be the last module in the pipeline
         if id(self) != id(pipeline.modules()[-1]):
-            raise ValidationError((f"The RunOnCluster module must be the last "
+            raise cps.ValidationError((f"The RunOnCluster module must be the last "
                                    f"in the pipeline."), self.runname)
 
         max_runtime = int(cluster_max_runtime())
         if self.max_walltime.value >= max_runtime:
-            raise ValidationError(
+            raise cps.ValidationError(
                 f"The maximum runtime must be less than {max_runtime} hours.",
                 self.max_walltime)
 
     def validate_module_warnings(self, pipeline):
         """Warn user re: Test mode """
         if pipeline.test_mode:
-            raise ValidationError(
+            raise cps.ValidationError(
                 "RunOnCluster will not produce output in Test Mode",
                 self.runname)
 
     @staticmethod
     def alter_path(path):
-        if path == get_default_output_directory():
+        if path == cpprefs.get_default_output_directory():
             path = 'results'
         else:
             path = os.path.join('results', os.path.basename(path))
@@ -396,24 +391,24 @@ class RunOnCluster(Module):
         """
 
         if outf is None:
-            path = get_default_output_directory()
+            path = cpprefs.get_default_output_directory()
             h5_path = os.path.join(path, F_BATCH_DATA_H5)
         else:
             h5_path = outf
 
         image_set_list = workspace.image_set_list
         pipeline = workspace.pipeline
-        m = Measurements(copy=workspace.measurements, filename=h5_path)
+        m = cpmeas.Measurements(copy=workspace.measurements, filename=h5_path)
 
         try:
-            assert isinstance(pipeline, Pipeline)
-            assert isinstance(m, Measurements)
+            assert isinstance(pipeline, cpp.Pipeline)
+            assert isinstance(m, cpmeas.Measurements)
 
             orig_pipeline = pipeline
             pipeline = pipeline.copy()
             # this use of workspace.frame is okay, since we're called from
             # prepare_run which happens in the main wx thread.
-            target_workspace = Workspace(pipeline, None, None, None, m,
+            target_workspace = cpw.Workspace(pipeline, None, None, None, m,
                                          image_set_list,
                                          workspace.frame)
             # Assuming all results go to the same place,

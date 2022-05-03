@@ -1,4 +1,6 @@
 venv/
 .idea/
 __pycache__/
+RunOnCluster.egg-info/
+*/__pycache__/
 setup.py
