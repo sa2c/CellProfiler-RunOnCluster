@@ -24,19 +24,16 @@ YES          YES          NO
 """
 
 import os
-
-# Modifications
-import sys
-sys.path.append('C:\\Users\\tianyi.pan\\AppData\\Local\\Programs\\Python\\Python38\\Lib\\site-packages')
-# End
-
 import re
-import logging
 import wx
+import logging
+logger = logging.getLogger(__name__)
+
+#import sys
+#sys.path.append('C:\\Users\\tianyi.pan\\AppData\\Local\\Programs\\Python\\Python38\\Lib\\site-packages')
 
 import cellprofiler_core
 from cellprofiler_core.module import Module
-from cellprofiler_core.constants.measurement import F_BATCH_DATA_H5
 from cellprofiler_core.setting import Binary, ValidationError
 from cellprofiler_core.setting.text import Integer, Text
 from cellprofiler_core.setting.do_something import DoSomething
@@ -44,14 +41,17 @@ from cellprofiler_core.preferences import get_default_output_directory
 from cellprofiler_core.measurement import Measurements
 from cellprofiler_core.workspace import Workspace
 from cellprofiler_core.pipeline import Pipeline
+from cellprofiler_core.constants.measurement import F_BATCH_DATA_H5
+
+# Debuging
+#import pdb
+#pdb.set_trace()
 
 from CPRynner.CPRynner import CPRynner
 from CPRynner.CPRynner import update_cluster_parameters
 from CPRynner.CPRynner import cluster_tasks_per_node
 from CPRynner.CPRynner import cluster_setup_script
 from CPRynner.CPRynner import cluster_max_runtime
-
-logger = logging.getLogger(__name__)
 
 
 class RunOnCluster(Module):
