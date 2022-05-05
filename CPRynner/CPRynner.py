@@ -12,6 +12,7 @@ workdir = tempfile.mkdtemp()
 os.chdir(workdir)
 
 import wx
+import Rynner
 from Rynner import rynner
 from libsubmit import SSHChannel
 from libsubmit.providers.slurm.slurm import SlurmProvider
@@ -121,14 +122,13 @@ class LoginDialog(wx.Dialog):
         """Constructor"""
         super(LoginDialog, self).__init__(None, title="Login", size = (300,180))
 
-
         self.panel = wx.Panel(self)
 
         # username field
         username_sizer = wx.BoxSizer(wx.HORIZONTAL)
         username_label = wx.StaticText(self.panel, label="Username:")
         username_sizer.Add(username_label, 0, wx.ALL|wx.CENTER, 5)
-        self.username = wx.TextCtrl(self.panel, value = username, size=(160, -1))
+        self.username = wx.TextCtrl(self.panel, value=username, size=(160, -1), style=wx.TE_PROCESS_ENTER)
         username_sizer.Add(self.username, 0, wx.ALL, 5)
  
         # password field
