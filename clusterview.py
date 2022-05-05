@@ -19,29 +19,24 @@ import os
 import time
 import shutil
 import tempfile
-# Modifications
-import sys
-sys.path.append('C:\\Users\\tianyi.pan\\AppData\\Local\\Programs\\Python\\Python38\\Lib\\site-packages')
-# End
 import timeago
-import wx
-import csv
-# Debuging
-import pdb
-pdb.set_trace()
-
-import wx.lib.scrolledpanel as scroller
-
+import datetime
 from datetime import datetime as dt
+import wx
 
-from cellprofiler_core.preferences import get_default_output_directory
-from cellprofiler_core.module import Module
-from cellprofiler_core.setting import HTMLText
-
-import CPRynner.CPRynner as CPRynner
+import csv
+import wx.lib.scrolledpanel as scroller
 
 import logging
 logger = logging.getLogger(__package__) 
+from cellprofiler_core.preferences import get_default_output_directory
+from cellprofiler_core.module import Module
+from cellprofiler_core.setting import HTMLText
+import CPRynner.CPRynner as CPRynner
+
+#import pdb
+#pdb.set_trace()
+
 
 class YesToAllMessageDialog(wx.Dialog):
     """
