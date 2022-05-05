@@ -36,10 +36,10 @@ import CPRynner.CPRynner as CPRynner
 
 
 class YesToAllMessageDialog(wx.Dialog):
-    '''
+    """
     A message dialog with "yes", "no" and "yes to all" buttons, returning
     wx.ID_YES, wx.ID_NO and wx.ID_YESTOALL respectively
-    '''
+    """
     def __init__(self, parent, message, title):
         super(YesToAllMessageDialog, self).__init__(parent, title=title, size = (310,210) )
         self.panel = wx.Panel(self)
@@ -88,10 +88,10 @@ class YesToAllMessageDialog(wx.Dialog):
 
 
 class ClusterviewFrame(wx.Frame):
-    '''
+    """
     A frame containing information on queued and accomplished runs,
     update and logout buttons and a download button for each run
-    '''
+    """
 
     def __init__(self, parent, title):
         # First update runs, then create the window
@@ -198,9 +198,9 @@ class ClusterviewFrame(wx.Frame):
                 vbox.Add(hbox3, flag=wx.ALIGN_RIGHT|wx.RIGHT, border=10)
 
     def set_timer(self, element):
-        '''
+        """
         Set a timer to update the time since last update
-        '''
+        """
         def update_st(event):
             element.SetLabel("Last updated: "+timeago.format(self.update_time, locale='en_GB'))
         def close(event):
@@ -215,9 +215,9 @@ class ClusterviewFrame(wx.Frame):
         self.download(run)
 
     def on_update_click( self, event ):
-        '''
+        """
         Update runs and rebuild the layout
-        '''
+        """
         self.update()
         self.draw()
 
@@ -243,9 +243,9 @@ class ClusterviewFrame(wx.Frame):
         self.FitInside()
 
     def update( self ):
-        '''
+        """
         Update the run list
-        '''
+        """
         rynner = CPRynner.CPRynner()
         if rynner is not None:
             self.runs = [ r for r in rynner.get_runs() if 'upload_time' in r ]
@@ -260,10 +260,10 @@ class ClusterviewFrame(wx.Frame):
 
 
     def download( self, run ):
-        '''
+        """
         Ask for a destination folder, download files in the results
         folders and move to the destination
-        '''
+        """
         target_directory = self.ask_for_output_dir()
         if not target_directory:
             return False
@@ -290,9 +290,9 @@ class ClusterviewFrame(wx.Frame):
         self.draw()
 
     def ask_for_output_dir(self):
-        '''
+        """
         Ask for a destination for the downloaded files
-        '''
+        """
         default_target = cpprefs.get_default_output_directory()
         dialog = wx.DirDialog (None, "Choose an output directory", default_target,
                     wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
@@ -308,10 +308,10 @@ class ClusterviewFrame(wx.Frame):
         return target_directory
 
     def download_to_tempdir(self, run, tmpdir):
-        '''
+        """
         Actually download the files from the cluster into tmpdir,
         showing a progress dialog
-        '''
+        """
         run.downloads = [ [d[0], tmpdir] for d in run.downloads ]
         CPRynner.CPRynner().start_download(run)
         dialog = wx.GenericProgressDialog("Downloading","Downloading files")
@@ -327,9 +327,9 @@ class ClusterviewFrame(wx.Frame):
         self.yes_to_all_clicked = False
 
     def rename_file(self, name):
-        '''
+        """
         Add a number at the end of a filename to create a unique new name
-        '''
+        """
         stripped_name, suffix = os.path.splitext(name)
         n=2
         new_name = stripped_name + '_' +str(n)+suffix
@@ -339,14 +339,14 @@ class ClusterviewFrame(wx.Frame):
         return new_name
     
     def handle_result_file( self, filename, target_directory, has_been_downloaded ):
-        '''
+        """
         Recursively check result files and move to the target directory. Handle conflicting file names
         and csv files
 
         Each run will create the same set of csv files to contain the measurement info. These need to be
         combined into one and the image numbers need to be fixed. We will ask how the files should be handled
         once for each file name and remember the answer in self.csv_dict
-        '''
+        """
         if os.path.isdir(filename):
             # Recursively walk directories
             for f in os.listdir(filename):
@@ -406,8 +406,10 @@ class ClusterviewFrame(wx.Frame):
         
 
     def handle_csv( self, source, destination ):
-        ''' Write the data rows of a csv file into an existing csv file.
-            Fix image numbering before writing '''
+        """
+        Write the data rows of a csv file into an existing csv file.
+        Fix image numbering before writing 
+        """
 
         # First check if the file contains the image number
         outfile = open(destination,"rb")
@@ -465,10 +467,11 @@ class clusterView(cpm.Module):
         return [self.pipelineinfo]
 
     def post_pipeline_load(self, pipeline):
-        '''Fixup any measurement names that might have been ambiguously loaded
+        """
+        Fixup any measurement names that might have been ambiguously loaded
 
         pipeline - for access to other module's measurements
-        '''
+        """
         pass
 
     def visible_settings(self):
@@ -486,13 +489,14 @@ class clusterView(cpm.Module):
         pass
 
     def validate_module(self, pipeline):
-        '''Do further validation on this module's settings
+        """
+        Do further validation on this module's settings
 
         pipeline - this module's pipeline
 
         Check to make sure the output measurements aren't duplicated
         by prior modules.
-        '''
+        """
         pass
 
     def upgrade_settings(self, setting_values, variable_revision_number,
