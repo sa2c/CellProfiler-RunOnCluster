@@ -484,11 +484,11 @@ class ClusterView(Module):
         super().__init__()
 
     @classmethod
-    def is_input_module(cls):
-        """ This is a rather horrible hack...
-            Prevents CellProfiler from listing this in the add module window.
-        """
-        return True
+    # #def is_input_module(cls):
+    #     """ This is a rather horrible hack...
+    #         Prevents CellProfiler from listing this in the add module window.
+    #     """
+    #     #return True
 
     def create_settings(self):
         self.pipelineinfo = HTMLText(
