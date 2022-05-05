@@ -4,3 +4,5 @@ __pycache__/
 RunOnCluster.egg-info/
 */__pycache__/
 setup.py
+loadimagesfromomero.py
+CellProfiler-plugins/
