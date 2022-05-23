@@ -25,12 +25,15 @@ YES          YES          NO
 
 import os
 import re
+from typing import List
 import wx
 import logging
 logger = logging.getLogger(__name__)
 
 #import sys
 #sys.path.append('C:\\Users\\tianyi.pan\\AppData\\Local\\Programs\\Python\\Python38\\Lib\\site-packages')
+#import pdb
+#pdb.set_trace()
 
 import cellprofiler_core
 from cellprofiler_core.module import Module
@@ -42,10 +45,6 @@ from cellprofiler_core.measurement import Measurements
 from cellprofiler_core.workspace import Workspace
 from cellprofiler_core.pipeline import Pipeline
 from cellprofiler_core.constants.measurement import F_BATCH_DATA_H5
-
-# Debuging
-#import pdb
-#pdb.set_trace()
 
 from CPRynner.CPRynner import CPRynner
 from CPRynner.CPRynner import update_cluster_parameters
@@ -93,7 +92,7 @@ class RunOnCluster(Module):
     def create_settings(self):
         """Create the module settings and name the module"""
 
-        doc_ = (f"Enter a recognizable identifier for the run "
+        doc_ = (f"Enter a recognisable identifier for the run "
                 f"(spaces will be replaced by undescores)")
         self.runname = Text("Run Name", "Run_name", doc=doc_)
 
@@ -247,7 +246,9 @@ class RunOnCluster(Module):
                                                        n_measurements,
                                                        measurements_per_run,
                                                        self.type_first.value)
-                    n_image_groups = max(zip(*grouped_images)[0]) + 1
+                    image_group_list = list(zip(*grouped_images))                                   
+                    n_image_groups = max(image_group_list[0]) + 1                                  
+                    #n_image_groups = max(zip(*grouped_images)[0]) + 1
 
                     # Add image files to uploads
                     uploads = [[name, f"run{g}/images"] for g, name in
@@ -357,18 +358,18 @@ class RunOnCluster(Module):
         # The submission happens in prepare run.
         pass
 
-    def validate_module(self, pipeline):
-        """Make sure the module settings are valid"""
-        # This must be the last module in the pipeline
-        if id(self) != id(pipeline.modules()[-1]):
-            raise ValidationError((f"The RunOnCluster module must be the last "
-                                   f"in the pipeline."), self.runname)
+    # def validate_module(self, pipeline):
+    #     """Make sure the module settings are valid"""
+    #     # This must be the last module in the pipeline
+    #     if id(self) != id(pipeline.modules()[-1]):
+    #         raise ValidationError((f"The RunOnCluster module must be the last "
+    #                                f"in the pipeline."), self.runname)
 
-        max_runtime = int(cluster_max_runtime())
-        if self.max_walltime.value >= max_runtime:
-            raise ValidationError(
-                f"The maximum runtime must be less than {max_runtime} hours.",
-                self.max_walltime)
+    #     max_runtime = int(cluster_max_runtime())
+    #     if self.max_walltime.value >= max_runtime:
+    #         raise ValidationError(
+    #             f"The maximum runtime must be less than {max_runtime} hours.",
+    #             self.max_walltime)
 
     def validate_module_warnings(self, pipeline):
         """Warn user re: Test mode """
