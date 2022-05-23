@@ -12,7 +12,7 @@ workdir = tempfile.mkdtemp()
 os.chdir(workdir)
 
 import wx
-from Rynner import rynner
+from Rynner.rynner.rynner import Rynner
 from libsubmit import SSHChannel
 from libsubmit.providers.slurm.slurm import SlurmProvider
 from libsubmit.launchers.launchers import SimpleLauncher
