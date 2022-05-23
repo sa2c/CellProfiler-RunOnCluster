@@ -16,10 +16,13 @@ When running on Linux or developing your own plugins, the most straight forward 
 
 ### Latest Plugins
 Please download the [latest plugins](https://github.com/sa2c/CellProfiler-RunOnCluster/archive/CellProfiler4.zip) from this branch and move the files to your plugins directory. In the plugins directory, install the [Rynner](https://github.com/sa2c/Rynner) module and additional requirements for the plugins:
+
 ```
 pip install git+https://github.com/sa2c/Rynner.git
 python -m pip install -r requirements.txt
 ```
+
+If `pip install` does not install the `Rynner` library properly (i.e. there is no ``Rynner`` inside ``site-packages``.). You should copy the `Rynner` folder in this repository and paste it inside ``side-packages``.
 
 ## Usage
 ### Submitting to Cluster
@@ -35,6 +38,6 @@ Submit the pipeline by pressing `Analyze Images`. The plugin will copy the image
 
 ### Checking Run Status
 
-Open the ClusterView module in the Data Tools menu. You will see a list of all runs submitted to the cluster. Under the run name the module will display `PENDING` for runs in queue or currently running and `COMPLETED` for runs that have stopped running. Click `Update` in the upper left corner to refresh the status of the runs. Use the `Download Results` button to download and inspect the results.
+In CellProfiler 3, you can open the `ClusterView` module in the `Data Tools` menu, however, in CellPfoiler 4 the `Data Tools` menu has been merged into the Module list. Therefore, you will need to add the `ClusterView` plugin into the pipeline, then ou will see a list of all runs submitted to the cluster. Under the run name the module will display `PENDING` for runs in queue or currently running and `COMPLETED` for runs that have stopped running. Click `Update` in the upper left corner to refresh the status of the runs. Use the `Download Results` button to download and inspect the results.
 
 If you have already downloaded the results, the button label will change to `Download Again`.
