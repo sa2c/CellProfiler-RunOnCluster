@@ -1,0 +1,7 @@
+The chosen style is the numpy extension of reStructuredText (.rst).
+We use the Napoleon extension for sphinx to generate it (with autodoc as well)
+
+Auto generate the documentation starting the server 
+sphinx-autobuild . _build/html
+
+

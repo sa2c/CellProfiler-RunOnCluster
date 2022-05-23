@@ -1,0 +1,184 @@
+* CLASS: Run
+- initialised with cluster arguments
+- Generates a UUID (abstracts away jobID)
+- Host should be the first argument (and/or present as a kwarg) [either collected from user or specified here]
+- the arguments download, upload and sync are consumed by run method
+- Arguments pertaining to all known schedulers/types are removed and passed to the host "inline"
+- Parses arguments with runnable = host.parse(args, host_args)
+- Stores dict (based on UUID) using host.store(dict) - must remember to download the store later
+- Uploads files --> synchronously
+- Run "caches" input arguments on the cluster host.store(uid, key, value)
+- Run handles uploads/downloads (needs to store these "locally" ? Or maybe gobally? Allow for both)
+- Runs with host.run(runnable)
+- Run now garbage-collectable...?
+
+note: default setup could be: def setup(data): Run(data) config is defined as: {
+'identifier:GUI Label' : ... }
+
+* CLASS: Host (i.e. one per cluster)
+- initialised with connection, pattern_parser and datastore
+- host.parse() -> runnable = pattern_parser.parse(data)
+- host.run() -> pattern_parser.run(connection, runnable)
+- host.store(id, field, value) -> delegate to datastore
+- host.fetch(id, field, value) -> delegate to datastore
+- pattern_parser needs to be compatible with connection interface...!
+- should know about files?? Should this be in another object? There needs to be some persistent state somewhere...
+* CLASS: PatternParser (i.e. scheduler pattern_parser)
+- __init__(names, argument_mappings, defaults_arguments, default_formatter=format_and_append)
+  - argument_mappings are strings passed to format, or functions which take context objects
+- context = self.parse(data)
+  - Generates a context
+  - Eats arguments, raising exception if any left
+     => each cluster type has a named formatter, which reads the string and does
+    something to context => WHAT DOES THIS MEAN??
+  - Does "inverted" search that (Ed)
+- What does it do when an error is found?
+- PatternParser manipulates connection as well?? Can I have these two more loosely coupled?
+- Can it throw errors back at the UI?
+- self.run(connection, context)
+- names
+- context is (usually) just a list of strings
+- default mappings stored in a package variable
+- can be subclassed to change parse and run methods (e.g. change commands etc)
+# can add additional keys to the list at runtime...?
+
+# The following code is obsolete, the mapping is done the other way around at the moment.
+#+BEGIN_SOURCE python
+option_config=[ 'slurm:time' : '--time 0:0:%s', 'pbs:time' : '-l walltime=%s',
+'pbs:email' : '-m %s', 'slurm:email' : formatting_function
+'pbs:num_nodes,num_tasks,num_tasks_per_node,...' : slurm_resource_formatter
+'slurm:slurm': format 'pbs:pbs': None
+
+    # keys which are not present in either
+    'slurm:pbs': None 'pbs:slurm': None ]
+
+option_formatter = { 'slurm' : { 'num_nodes:num_tasks:num_tasks_per_node' :
+    slurm_resource_formatter # only called once 'time' : '--time %s' 'email' :
+    '--email %s' }, 'test-type' : { 'time' : raise_not_implmented } }
+    #+END_SOURCE python
+
+* CLASS: Config Specification - just a RynnerView:
+- constructed with list of input spec objects (first arg)
+- builds an instance of QDialog, based on a key passed for the GUI of interest and the appropriate QLayoutManager
+- Can construct sub-views with:
+PaneView( TextField(), OptionField ) i.e. have some control over layout
+- Essentially a list/tree of factories, build('gui_tk') calls build('gui_tk') on all of it's children -> who pass this on...
+* CLASS: RynnerView
+- each TextField refers to a particular type of display pattern_parser and a particular validation behaviour
+- display behaviour is a widget that knows how to paint and return a data type
+- map is a method that knows how to map from data type to a related datatype
+- validation knows how to validate the datatype
+
+e.g. email field:
+  - text box display behaviour with long length (gui specific)
+  - map = { lambda (x) x } (also gui or possibly type specific)
+  - validates as an email address
+ 
+numeric field
+- text box field with shorter length
+- map = str(...) function
+- validates as an email address
+
+- ConfigSpec is itself an instance of the view class - so can call build on it too...
+
+- from a command line, I pass 'rynner-command-line' and recurse the list asking for input...
+#+BEGIN_SRC python
+ic = RunCreateViewConfig([ TextField('Local Job Name', 'job_name'),
+    OptionField('Line Plot Type', 'Line Plot Type', [('Line', 'line'), ('Bar',
+    'bar'), ('Pie', 'pie')], 'plot_type'), NumericField( 'Local Numeric Field',
+    'velocity', 10), Directory( 'Local Working Directory', 'working_dir'),
+    File('Local Data File', default=lib.local_data_default, 'local_data_file'),
+    File('Local Configuration File', default='path/to/local/file',
+    'local_config_file'), HiddenField( None, datetime.datetime.now,
+    on=HiddenField.ACCEPT, 'config_date'), GitCommitField( 'Select Commit',
+    git_repo_url, 'commit'), Select( 'Select Cluster'), 'cluster']) ]) #+END_SRC
+
+#+BEGIN_SRC python
+ic = RunCreateViewConfig([ ConfigGroup([ TextField('Local Job Name', 'job_name'),
+    OptionField('Line Plot Type', 'Line Plot Type', [('Line', 'line'), ('Bar',
+    'bar'), ('Pie', 'pie')], 'plot_type'), NumericField( 'Local Numeric Field',
+    'velocity', 10), WizardGroup( FirstWizardView(TextField('mywiz')),
+    SecondWizardView(TextField('anotherwiz')), layout=QLayout()), Directory(
+    'Local Working Directory', 'working_dir'), File('Local Data File',
+    default=lib.local_data_default, 'local_data_file'), File('Local
+    Configuration File', default='path/to/local/file', 'local_config_file'),
+    HiddenField( None, datetime.datetime.now, on=HiddenField.ACCEPT,
+    'config_date'), GitCommitField( 'Select Commit', git_repo_url, 'commit'),
+    Select( 'Select Cluster'), 'cluster']) ] #+END_SRC
+* CLASS: RynnerDialog
+- Constructed with a RynnerView object (or a series of them for a "wizard")
+- Each Rynner object shares an underlying data object ?? Which has some model-level validation on it?
+- Had a "build" method as well, calls the build model on its children...
+- The build method essentially replaces the object with an instance of the appropriate gui class based on a key
+* TODO CLASS: Datastore
+- contains store and fetch methods
+- handles local/remote copies and caching etc somehow
+- initialised with connection to cluster (if required)
+- Should connect datastore to GUI for signalling exceptions and/or failures
+- note: Job ID should be added to the data object (??) - or maybe I use the UUID everywhere?
+* TODO CLASS: Manager?
+- need somewhere to load hosts and plugins and to tie everything together
+- should have everything exposed through Plugin class? (so easy to modify in the plugin?)
+- need some way of selecting hosts from within a plugin...!
+- How do I know what hosts a job type is allowed?
+- How can a job type tell the application what hosts it wants to work with?
+- Hosts should be rebuild on restart, and need to be identifiable by the run -> manage this by storing stuff on the cluster, each host should always have the same datastore
+* Problems
+- I need to define the host subclasses that I support somehow...
+- how to define a "cluster"?
+  * an option parser (e.g. SLURM/PBS) or a custom subclass
+  * par
+  * more stuff...?
+- can the cluster formatters be plugin loaded? what can be plugin loaded?
+* Example code:
+arguments: num tasks num tasks per node num threads per task
+#+BEGIN_SRC python
+def setup(data, context):
+    # context allows access to the plugin etc
+
+    run = Run(
+        # Options
+        name='my-job-name' time=time_delta, # seconds
+        memory_per_cpu=Memory(20), # kb cores=1, number_nodes=1, ntasks=10,
+        tasks_per_node=, threads_per_task=, output='file_to_output'
+        email='person@email.com' # => interesting, is maybe a PLUGIN-LEVEL
+        config....! Should there be a hierarchy of logic here??
+        shell='/bin/bash', queue='myqueue', script='echo "Hello World"',
+        download=[('remote', 'local'), ('remote', 'local')], upload= [('local',
+        'remote)'), ('local)', 'remote)')], sync=[('local', 'remote)'),
+        ('local)', 'remote)'), interval=5 ],
+
+        dependency=run_prev.id,
+
+        queue....?? shell...??)
+
+    run.slurm( '--time', '--money', '--nodes')
+
+        pbs=[ '--money' ]
+
+
+plugin = Plugin(setup) #+END_SRC python
+
+the default code could be:
+#+BEGIN_SRC python
+config = {'name:Job Name' : InputString(), 'cores:Number of Cores' :
+InputString(10), 'memory_per_cpu:Memory' : 1, }
+
+def setup(data): Run(data) #+END_SRC python
+* TODO Conference
+- a plugin example repo ?
+- UI exception handling
+* Async PatternParser
+- fetch of jobs should be async in another thread
+- Connection object should delegate to a single worker connection thread which does all the async stuff
+- This would mean that LONG FILE UPLOADS WOULD FREEZE THE INTERFACE JOB FETCHING...!?
+- The job actually should be placed at the end of the queue (so it runs at the right time) - i,e the queue is FIFO
+- An exception handler method just notifies the user of exceptions (for now)
+* Other clients
+- command line
+- emacs
+* Other considerations
+- what about a process that lives on the cluster (and runner function runs on that side)
+- how should I implement that? Future work?
+
+note: job data objects should contain cluster jobID...!
