@@ -457,14 +457,40 @@ class clusterView(cpm.Module):
     #     #return True
 
     def create_settings(self):
-        self.pipelineinfo = cps.HTMLText( 
-            "",
-            "Use the 'Data Tools' menu to open the Cluster View",
-            size=(2,2)
-        )
+        
+        self.update_module()
+                
+        doc_ = "Bring up old ClusterView frame."
+        self.frame_button = cps.do_something.DoSomething(
+            "", "Cluster View", self.run_as_data_tool, doc = doc_)
+
+        doc_ = "Select a CellProfiler job that has been run on the cluster."
+        self.choose_run = cps.choice.Choice(
+            "Select CellProfiler cluster run.", choices=self.run_names, value="None", doc = doc_)
+
+        doc_ = "Update the module's internal list of CellProfiler cluster runs."
+        self.update_button = cps.do_something.DoSomething(
+            "Update job list.", "Update", self.update_module, doc = doc_) 
+        
+        doc_ = "View the status of the currently selected cluster job. Opens new window."
+        self.status_button = cps.do_something.DoSomething(
+            "View job status.", "Status", self.run_status_window, doc = doc_)
+
+        # doc_ = "Update the cluster login settings."
+
+        doc_ = "Log out from the cluster. Log back in by updating cluster settings."
+        self.logout_button = cps.do_something.DoSomething(
+            "Logout from cluster.", "Logout", self.on_logout_click, doc = doc_)
 
     def settings(self):
-        return [self.pipelineinfo]
+        result = [
+            self.frame_button,
+            self.choose_run,
+            self.update_button,
+            self.status_button,
+            self.logout_button
+        ]
+        return result
 
     def post_pipeline_load(self, pipeline):
         """
@@ -475,7 +501,15 @@ class clusterView(cpm.Module):
         pass
 
     def visible_settings(self):
-        return [self.pipelineinfo]
+        result = [
+            self.frame_button,
+            self.choose_run,
+            self.update_button,
+            self.logout_button
+        ]
+        if self.choose_run.value != "None":
+            result += [self.status_button]
+        return result
 
     def run(self):
         pass
@@ -485,7 +519,34 @@ class clusterView(cpm.Module):
         frame.Show()
         pass
 
-    def display(self, workspace, figure):
+    def update_module(self):
+        """
+        Update the run list
+        """
+        rynner = CPRynner.CPRynner()
+        if rynner is not None:
+            self.runs = [ r for r in rynner.get_runs() if 'upload_time' in r ]
+            rynner.update(self.runs)
+            rynner.update_start_times(self.runs)
+            for run in self.runs:
+                run['status_time'] = rynner.read_time(run)
+            self.update_time = datetime.datetime.now()
+        else:
+            self.runs = []
+        self.run_names = []
+        for r in self.runs:
+            self.run_names[r] = self.runs.job_name[r]
+        self.run_names += ["None"]
+
+    def on_logout_click( self ):
+        CPRynner.logout()
+        self.runs = []
+        self.run_names = ["None"]
+
+    def run_status_window(self):
+        run = self.runs[self.choose_run.index(self.choose_run.value)]
+        frame = RunStatusFrame(wx.GetApp().frame,self.choose_run.value,run)
+        frame.Show()
         pass
 
     def validate_module(self, pipeline):
@@ -505,3 +566,113 @@ class clusterView(cpm.Module):
     
     def volumetric(self):
         return True
+
+class RunStatusFrame(wx.Frame):
+    """
+    A pop-up window that displays the state of the chosen run and offers a download button if completed.
+    """
+    def __init__(self, parent, title, run):
+        super(RunStatusFrame, self).__init__(parent, title = title, size = (400,200))
+        self.run = run
+        self.run_complete = False
+        self.download_num = 0
+        self.InitUI()
+        self.Centre()
+
+    def InitUI(self):
+        font = wx.SystemSettings.GetFont(wx.SYS_SYSTEM_FONT)
+        font.SetPointSize(9)
+
+        self.panel = wx.Panel(self)
+        self.panel.SetBackgroundColour('#ededed')
+
+        run_text = wx.StaticText(self.panel, label=("Run name: "+self.run.job_name))
+        run_text.SetFont(font)
+        self.status_text = wx.StaticText(self.panel, label="Run status:   PENDING")
+        self.status_text.SetFont(font)           
+
+        # Create a download button                
+        self.download_number_text = wx.StaticText(self.panel, label="Times downloaded:   0")
+        self.download_number_text.SetFont(font)
+        self.download_avail_text = wx.StaticText(self.panel, label="Download available?:   False")
+        self.download_avail_text.SetFont(font)
+        self.download_button = wx.Button(self.panel, label='Download', size=(90,30))
+        self.download_button.Bind(wx.EVT_BUTTON, self.on_download_click)
+        self.download_button.SetFont(font)
+        self.download_button.Disable()
+        
+        # Update text and button:         
+        update_button = wx.Button(self.panel, label='Update', size=(90, 30))
+        update_button.Bind(wx.EVT_BUTTON, self.on_update_click)
+        update_button.SetFont(font)
+        self.update_time = datetime.datetime.now()
+        update_text = wx.StaticText(self.panel, label="")
+        update_text.SetFont(font)
+        self.set_timer(update_text)
+        
+        self.vbox = wx.BoxSizer(wx.VERTICAL)        
+        self.vbox.Add((-1, 5))
+        # Horizontal line for separation
+        vline = wx.StaticLine(self.panel, style=wx.LI_VERTICAL)
+        run_hbox = wx.BoxSizer(wx.HORIZONTAL)
+        run_hbox.Add(run_text, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 8)
+        run_hbox.Add(vline, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 8)
+        run_hbox.Add(self.status_text, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 8)
+        # Add the run name to the box sizer.
+        self.vbox.Add(run_hbox, 0, wx.EXPAND, 10)
+        # Vertical line for spacing
+        self.vbox.Add((-1, 5))
+        hline = wx.StaticLine(self.panel)
+        self.vbox.Add(hline, 0, wx.EXPAND, 10)    
+        # Incorporate the update button and text into a single box sizer
+        update_hbox = wx.BoxSizer(wx.HORIZONTAL)
+        update_hbox.Add(update_button, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 8)  
+        update_hbox.Add(update_text, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 8)              
+        # Add the update box sizer to the main box sizer 
+        self.vbox.Add((-1, 5))
+        self.vbox.Add(update_hbox, 0, wx.EXPAND, 10)
+        # Another vertical line for spacing
+        hline = wx.StaticLine(self.panel)
+        self.vbox.Add(hline, 0, wx.EXPAND, 10)
+        # Want some vertical alignment, so putting in another vbox
+        download_vbox = wx.BoxSizer(wx.VERTICAL)
+        download_hbox = wx.BoxSizer(wx.HORIZONTAL)
+        download_hbox.Add(self.download_button, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 8)
+        download_hbox.Add(self.download_avail_text, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 8)
+        download_vbox.Add((-1,5))
+        download_vbox.Add(download_hbox, 0, wx.EXPAND, 10)
+        hline = wx.StaticLine(self.panel)
+        download_vbox.Add((-1,5))
+        download_vbox.Add(hline, 0, wx.EXPAND, 10)
+        download_vbox.Add(self.download_number_text, 0, wx.EXPAND, 10)
+
+        self.vbox.Add(download_vbox, 0, wx.EXPAND, 10)
+
+        self.panel.SetSizer(self.vbox)
+        self.panel.SetAutoLayout(1)
+
+    def on_update_click(self, event):
+        self.update_time = datetime.datetime.now()
+        self.status_text.SetLabel("Run status:  COMPLETE")
+        self.run_complete = True
+        self.download_avail_text.SetLabel("Download available?:   "+str(self.run_complete))
+        self.download_button.Enable()
+
+    def on_download_click(self, event):
+        if self.run_complete == True:
+            self.download_num += 1
+            self.download_number_text.SetLabel("Times downloaded:   "+str(self.download_num))
+
+    def set_timer(self, element):
+        """
+        Set a timer to update the time since last update
+        """
+        def update_st(event):
+            element.SetLabel("Last updated: "+timeago.format(self.update_time, locale='en_GB'))
+        def close(event):
+            self.timer.Stop()
+            self.Destroy()
+        self.timer = wx.Timer(self)
+        self.timer.Start(1000)
+        self.Bind(wx.EVT_TIMER, update_st, self.timer)
+        wx.EVT_CLOSE(self, close)
