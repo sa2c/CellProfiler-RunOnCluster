@@ -32,8 +32,7 @@ logger = logging.getLogger(__name__)
 
 #import sys
 #sys.path.append('C:\\Users\\tianyi.pan\\AppData\\Local\\Programs\\Python\\Python38\\Lib\\site-packages')
-#import pdb
-#pdb.set_trace()
+import pdb
 
 import cellprofiler_core
 from cellprofiler_core.module import Module
@@ -250,7 +249,7 @@ class RunOnCluster(Module):
                     n_image_groups = max(image_group_list[0]) + 1                                  
                     #n_image_groups = max(zip(*grouped_images)[0]) + 1
 
-                    # Add image files to uploads
+                                        # Add image files to uploads
                     uploads = [[name, f"run{g}/images"] for g, name in
                                grouped_images]
 
@@ -269,6 +268,8 @@ class RunOnCluster(Module):
 
                 # Also add the pipeline
                 uploads += [[path, '.']]
+                
+                pdb.set_trace()
 
                 # The runs are downloaded in their separate folders.
                 # They can be processed later
