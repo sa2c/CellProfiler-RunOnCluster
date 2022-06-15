@@ -30,10 +30,6 @@ import wx
 import logging
 logger = logging.getLogger(__name__)
 
-#import sys
-#sys.path.append('C:\\Users\\tianyi.pan\\AppData\\Local\\Programs\\Python\\Python38\\Lib\\site-packages')
-import pdb
-
 import cellprofiler_core
 from cellprofiler_core.module import Module
 from cellprofiler_core.setting import Binary, ValidationError
@@ -268,8 +264,6 @@ class RunOnCluster(Module):
 
                 # Also add the pipeline
                 uploads += [[path, '.']]
-                
-                pdb.set_trace()
 
                 # The runs are downloaded in their separate folders.
                 # They can be processed later
