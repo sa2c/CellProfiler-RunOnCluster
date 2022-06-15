@@ -1,7 +1,9 @@
+This is the structure of my Rynner folder inside site-packages. If you cannot get Rynner installed properly, you may consider to download this folder and paste it in your site-packages folder.
+
+### Something from its original repository
+
 The chosen style is the numpy extension of reStructuredText (.rst).
 We use the Napoleon extension for sphinx to generate it (with autodoc as well)
 
 Auto generate the documentation starting the server 
 sphinx-autobuild . _build/html
-
-
