@@ -250,7 +250,6 @@ class ClusterviewFrame(wx.Frame):
         if rynner is not None:
             self.runs = [ r for r in rynner.get_runs() if 'upload_time' in r ]
             rynner.update(self.runs)
-            rynner.update_start_times(self.runs)
             for run in self.runs:
                 run['status_time'] = rynner.read_time(run)
             self.update_time = datetime.datetime.now()
@@ -449,17 +448,13 @@ class clusterView(cpm.Module):
     category = "Data Tools"
     variable_revision_number = 1
 
-    @classmethod
-    # #def is_input_module(cls):
-    #     """ This is a rather horrible hack...
-    #         Prevents CellProfiler from listing this in the add module window.
-    #     """
-    #     #return True
+    def __init__(self):
+        super().__init__()
 
     def create_settings(self):
         
-        self.update_module()
-                
+        self.run_names = ["None"]
+
         doc_ = "Bring up old ClusterView frame."
         self.frame_button = cps.do_something.DoSomething(
             "", "Cluster View", self.run_as_data_tool, doc = doc_)
@@ -476,7 +471,9 @@ class clusterView(cpm.Module):
         self.status_button = cps.do_something.DoSomething(
             "View job status.", "Status", self.run_status_window, doc = doc_)
 
-        # doc_ = "Update the cluster login settings."
+        doc_ = "Update the cluster login settings."
+        self.settings_button = cps.do_something.DoSomething(
+            "Change cluster settings.", "Settings", self.on_settings_click, doc = doc_)
 
         doc_ = "Log out from the cluster. Log back in by updating cluster settings."
         self.logout_button = cps.do_something.DoSomething(
@@ -487,8 +484,9 @@ class clusterView(cpm.Module):
             self.frame_button,
             self.choose_run,
             self.update_button,
-            self.status_button,
-            self.logout_button
+            self.settings_button,
+            self.logout_button,
+            self.status_button
         ]
         return result
 
@@ -505,6 +503,7 @@ class clusterView(cpm.Module):
             self.frame_button,
             self.choose_run,
             self.update_button,
+            self.settings_button,
             self.logout_button
         ]
         if self.choose_run.value != "None":
@@ -527,7 +526,6 @@ class clusterView(cpm.Module):
         if rynner is not None:
             self.runs = [ r for r in rynner.get_runs() if 'upload_time' in r ]
             rynner.update(self.runs)
-            rynner.update_start_times(self.runs)
             for run in self.runs:
                 run['status_time'] = rynner.read_time(run)
             self.update_time = datetime.datetime.now()
@@ -542,6 +540,16 @@ class clusterView(cpm.Module):
         CPRynner.logout()
         self.runs = []
         self.run_names = ["None"]
+
+    def on_settings_click(self):
+        cluster_address_orig = CPRynner.cluster_url()
+        CPRynner.update_cluster_parameters()
+        cluster_address_new = CPRynner.cluster_url()
+
+        if cluster_address_orig != cluster_address_new:
+            CPRynner.logout()
+        self.runs = []
+        self.update_module()
 
     def run_status_window(self):
         run = self.runs[self.choose_run.index(self.choose_run.value)]
