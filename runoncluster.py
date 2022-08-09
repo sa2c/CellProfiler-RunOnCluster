@@ -333,7 +333,9 @@ class RunOnCluster(Module):
                     workspace_copy.pipeline.add_urls(group_file_list)
 
                     # save the pipeline on a per-node basis
-                    path = self.save_pipeline(workspace_copy)
+                    batch_dir = os.path.join(get_default_output_directory(),f"run{g}")
+                    os.mkdir(batch_dir)
+                    path = self.save_remote_pipeline(workspace_copy,os.path.join(batch_dir,F_BATCH_DATA_H5))
                     # Also add the pipeline
                     uploads += [[path, f"run{g}"]]    
                     
@@ -459,11 +461,52 @@ class RunOnCluster(Module):
                 re.sub(r"\.|rc\d{1}", "", cellprofiler_core.__version__))
             
             self_copy.batch_mode.value = True
-            # Trim RunOnCluster and ClusterView modules from submitted pipeline
+            # Pipeline is readied for saving at this point
+            pipeline.prepare_to_create_batch(target_workspace, self.alter_path)
+            
+            pipeline.write_pipeline_measurement(m)
+            orig_pipeline.write_pipeline_measurement(m, user_pipeline=True)
+
+            return h5_path
+        finally:
+            m.close()
+
+    def save_remote_pipeline(self, workspace, outf=None):
+        
+        if outf is None:
+            path = get_default_output_directory()
+            h5_path = os.path.join(path, F_BATCH_DATA_H5)
+        else:
+            h5_path = outf 
+
+        image_set_list = workspace.image_set_list
+        pipeline = workspace.pipeline
+        m = Measurements(copy=workspace.measurements, filename=h5_path)
+
+        try:
+            assert isinstance(pipeline, Pipeline)
+            assert isinstance(m, Measurements)
+
+            orig_pipeline = pipeline
+            pipeline = pipeline.copy()
+            # this use of workspace.frame is okay, since we're called from
+            # prepare_run which happens in the main wx thread.
+            target_workspace = Workspace(pipeline, None, None, None, m,
+                                         image_set_list,
+                                         workspace.frame)
+            # Assuming all results go to the same place,
+            # output folder can be set in the script
+
+            self_copy = pipeline.module(self.module_num)
+            self_copy.revision.value = int(
+                re.sub(r"\.|rc\d{1}", "", cellprofiler_core.__version__))
+            
+            self_copy.batch_mode.value = True   
+        # Trim RunOnCluster and ClusterView modules from submitted pipeline
             for module in reversed(pipeline.modules()): 
                 if module.module_name == "RunOnCluster" or module.module_name == "ClusterView":
                     pipeline.remove_module(module.module_num)
-            # Pipeline is readied for saving at this point
+
             pipeline.prepare_to_create_batch(target_workspace, self.alter_path)
             
             pipeline.write_pipeline_measurement(m)
