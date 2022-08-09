@@ -66,6 +66,13 @@ class RunOnCluster(Module):
     def upload(run, dialog=None):
         rynner = CPRynner()
 
+        print("Checking rynner paths before upload: ")
+        print(f"Provider script_dir: {rynner.provider.script_dir}")
+        print(f"Provider channel script_dir: {rynner.provider.channel.script_dir}")
+        print(f"Rynner path: {rynner.path}")
+        print("Checking run path: ")
+        print(f"Run remote directory: {run.remote_dir}")
+
         if dialog is None:
             dialog = wx.GenericProgressDialog("Uploading", "Uploading files")
         destroy_dialog = True if dialog is None else False
@@ -195,6 +202,8 @@ class RunOnCluster(Module):
         """Invoke the image_set_list pickling mechanism and save the pipeline"""
 
         pipeline = workspace.pipeline
+        # Create copy of workspace to play around with
+        workspace_copy = workspace
 
         if pipeline.test_mode:
             return True
@@ -210,9 +219,10 @@ class RunOnCluster(Module):
                 # Set walltime
                 rynner.provider.walltime = str(
                     self.max_walltime.value) + ":00:00"
-
-                # save the pipeline
-                path = self.save_pipeline(workspace)
+                print("Checking rynner directories before sorting files: ")
+                print(f"Provider script_dir: {rynner.provider.script_dir}")
+                print(f"Provider channel script_dir: {rynner.provider.channel.script_dir}")
+                print(f"Rynner path: {rynner.path}")
 
                 # Create the run data structure
                 file_list = pipeline.file_list
@@ -260,31 +270,34 @@ class RunOnCluster(Module):
 
                     n_measurements = self.measurements_in_archive.value
                     n_image_groups = max_tasks
-
-                # Also add the pipeline
-                uploads += [[path, '.']]
                 
-                pdb.set_trace()
+                # pdb.set_trace()
 
                 # The runs are downloaded in their separate folders.
                 # They can be processed later
                 output_dir = get_default_output_directory()
                 downloads = [[f"run{g}", output_dir] for g in
                              range(n_image_groups)]
+                
+                print("Checking rynner directories before sorting files: ")
+                print(f"Provider script_dir: {rynner.provider.script_dir}")
+                print(f"Provider channel script_dir: {rynner.provider.channel.script_dir}")
+                print(f"Rynner path: {rynner.path}")
 
                 # Create run scripts and add to uploads
                 for g in range(n_image_groups):
                     runscript_name = f"cellprofiler_run{g}"
-                    local_script_path = os.path.join(rynner.provider.script_dir,
+                    local_script_path = os.path.join(output_dir,
                                                      runscript_name)
-
+                    print(local_script_path)
                     if not self.is_archive.value:
                         n_measurements = len([i for i in grouped_images if i[
                             0] == g]) / self.n_images_per_measurement.value
 
-                        script = (f"cellprofiler -c -p ../Batch_data.h5 -o " 
+                        script = (f"cellprofiler -c -p Batch_data.h5 -o " 
                                   f"results -i images -f 1 -l {n_measurements}" 
                                   f" 2>>../cellprofiler_output; rm -r images")
+                        script = script.replace('\r\n','\n')
 
                     else:
                         n_images_per_group = int(n_measurements / max_tasks)
@@ -299,16 +312,35 @@ class RunOnCluster(Module):
                                     g + 1) + n_additional_images
 
                         script = (f"mkdir images; cp ../images/* images; "
-                                  f"cellprofiler -c -p ../Batch_data.h5 -o "
+                                  f"cellprofiler -c -p Batch_data.h5 -o "
                                   f"results -i images -f {first} -l {last} 2>>"
                                   f"../cellprofiler_output; rm -r images")
+                        script = script.replace('\r\n', '\n')
 
                     with open(local_script_path, "w") as file:
                         file.write(script)
 
                     uploads += [[local_script_path, f"run{g}"]]
 
+                    # Alter URLs / file_list of pipeline to only include cluster-corrected paths to image upload destinations
+                    job_base_path = os.path.join(rynner.provider.script_dir, f"run{g}/images")
+                    print(job_base_path)
+                    [*group_image_names] = [name for inds, name in grouped_images if inds == g]
+                    group_file_list = []
+                    for name in group_image_names:
+                        group_file_list += [os.path.join(job_base_path,os.path.basename(name))]
+                    workspace_copy.pipeline.clear_urls()
+                    workspace_copy.pipeline.add_urls(group_file_list)
+
+                    # save the pipeline on a per-node basis
+                    path = self.save_pipeline(workspace_copy)
+                    # Also add the pipeline
+                    uploads += [[path, f"run{g}"]]    
+                    
+                    print(uploads)
+
                 # Define the job to run
+                setup_script = setup_script.replace('\r\n','\n') # Hoping to sanitise any DOS linebreaks
                 script = (f"{setup_script}; printf %s\\\\n "
                           f"{{0..{n_image_groups - 1}}} | xargs -P 40 -n 1 -IX "
                           f"bash -c \"cd runX ; ./cellprofiler_runX; \";")
@@ -326,12 +358,20 @@ class RunOnCluster(Module):
                 dialog = wx.GenericProgressDialog("Uploading",
                                                   "Uploading files",
                                                   style=wx.PD_APP_MODAL)
-                try:
-                    self.upload(run, dialog)
 
+                print("Checking rynner directories before submitting run: ")
+                print(f"Provider script_dir: {rynner.provider.script_dir}")
+                print(f"Provider channel script_dir: {rynner.provider.channel.script_dir}")
+                print(f"Rynner path: {rynner.path}")
+                print("Checking run path: ")
+                print(f"Run remote directory: {run.remote_dir}")
+
+                try:
+
+                    self.upload(run, dialog)
                     # Submit the run
                     dialog.Update(dialog.GetRange() - 1, "Submitting")
-                    success = CPRynner().submit(run)
+                    success = rynner.submit(run)
                     dialog.Destroy()
 
                     if success:
@@ -414,17 +454,18 @@ class RunOnCluster(Module):
             # Assuming all results go to the same place,
             # output folder can be set in the script
 
-            # Trim RunOnCluster and ClusterView modules from submitted pipeline
-            for module in reversed(pipeline.modules()): 
-                if module.module_name == "RunOnCluster" or "ClusterView":
-                    pipeline.remove_module(module.module_num)
-            # Pipeline is readied for saving at this point
-            pipeline.prepare_to_create_batch(target_workspace, self.alter_path)
             self_copy = pipeline.module(self.module_num)
             self_copy.revision.value = int(
                 re.sub(r"\.|rc\d{1}", "", cellprofiler_core.__version__))
             
             self_copy.batch_mode.value = True
+            # Trim RunOnCluster and ClusterView modules from submitted pipeline
+            for module in reversed(pipeline.modules()): 
+                if module.module_name == "RunOnCluster" or module.module_name == "ClusterView":
+                    pipeline.remove_module(module.module_num)
+            # Pipeline is readied for saving at this point
+            pipeline.prepare_to_create_batch(target_workspace, self.alter_path)
+            
             pipeline.write_pipeline_measurement(m)
             orig_pipeline.write_pipeline_measurement(m, user_pipeline=True)
 
