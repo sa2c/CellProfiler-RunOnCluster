@@ -21,6 +21,7 @@ Supports 2D? Supports 3D? Respects masks?
 ============ ============ ===============
 YES          YES          NO
 ============ ============ ===============
+
 """
 
 import os
@@ -264,6 +265,8 @@ class RunOnCluster(Module):
 
                 # Also add the pipeline
                 uploads += [[path, '.']]
+                
+                #pdb.set_trace()
 
                 # The runs are downloaded in their separate folders.
                 # They can be processed later
@@ -281,7 +284,7 @@ class RunOnCluster(Module):
                         n_measurements = len([i for i in grouped_images if i[
                             0] == g]) / self.n_images_per_measurement.value
 
-                        script = (f"cellprofiler -c -p ../Batch_data.h5 -o " 
+                        script = (f"cellprofiler -c -p -r ../Batch_data.h5 -o " 
                                   f"results -i images -f 1 -l {n_measurements}" 
                                   f" 2>>../cellprofiler_output; rm -r images")
 
@@ -298,7 +301,7 @@ class RunOnCluster(Module):
                                     g + 1) + n_additional_images
 
                         script = (f"mkdir images; cp ../images/* images; "
-                                  f"cellprofiler -c -p ../Batch_data.h5 -o "
+                                  f"cellprofiler -c -p -r ../Batch_data.h5 -o "
                                   f"results -i images -f {first} -l {last} 2>>"
                                   f"../cellprofiler_output; rm -r images")
 
