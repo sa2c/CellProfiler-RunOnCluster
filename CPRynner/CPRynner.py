@@ -210,9 +210,13 @@ def cluster_setup_script():
     if cnfg.Exists('setup_script'):
         setup_script = cnfg.Read('setup_script')
     else:
-        setup_script = """\
+         setup_script = """\
 module load cellprofiler;
 module load java;"""
+#         setup_script = """\        
+# module load anaconda/2021.05
+# source activate CellProfiler
+# module load java;"""
     return setup_script
 
 def cluster_work_dir():
@@ -261,7 +265,6 @@ def update_cluster_parameters():
         cnfg.Write('setup_script', setup_script)
 
     dialog.Destroy()
-
 
 def _create_rynner():
     ''' Create an instance of Rynner connected to the cluster
