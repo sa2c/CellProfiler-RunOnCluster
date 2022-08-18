@@ -21,7 +21,6 @@ Supports 2D? Supports 3D? Respects masks?
 ============ ============ ===============
 YES          YES          NO
 ============ ============ ===============
-
 """
 
 import os
@@ -30,6 +29,7 @@ from typing import List
 import wx
 import logging
 logger = logging.getLogger(__name__)
+from copy import deepcopy
 
 import cellprofiler_core
 from cellprofiler_core.module import Module
@@ -41,6 +41,13 @@ from cellprofiler_core.measurement import Measurements
 from cellprofiler_core.workspace import Workspace
 from cellprofiler_core.pipeline import Pipeline
 from cellprofiler_core.constants.measurement import F_BATCH_DATA_H5
+
+from cellprofiler_core.setting.text import Directory
+from cellprofiler_core.preferences import ABSOLUTE_FOLDER_NAME
+from cellprofiler_core.preferences import DEFAULT_INPUT_FOLDER_NAME
+from cellprofiler_core.preferences import DEFAULT_INPUT_SUBFOLDER_NAME
+from cellprofiler_core.preferences import DEFAULT_OUTPUT_FOLDER_NAME
+from cellprofiler_core.preferences import DEFAULT_OUTPUT_SUBFOLDER_NAME
 
 from CPRynner.CPRynner import CPRynner
 from CPRynner.CPRynner import update_cluster_parameters
@@ -67,6 +74,13 @@ class RunOnCluster(Module):
     @staticmethod
     def upload(run, dialog=None):
         rynner = CPRynner()
+
+        print("Checking rynner paths before upload: ")
+        print(f"Provider script_dir: {rynner.provider.script_dir}")
+        print(f"Provider channel script_dir: {rynner.provider.channel.script_dir}")
+        print(f"Rynner path: {rynner.path}")
+        print("Checking run path: ")
+        print(f"Run remote directory: {run.remote_dir}")
 
         if dialog is None:
             dialog = wx.GenericProgressDialog("Uploading", "Uploading files")
@@ -110,16 +124,31 @@ class RunOnCluster(Module):
         self.measurements_in_archive = Integer(
             "Number of measurements in the archive", 1, minval=1, doc=doc_)
 
-        doc_ = (f"The maximum time for reserving a node  on the cluster. Should"
+        doc_ = (f"The maximum time for reserving a node on the cluster. Should"
                 f" be higher than the actual runtime, or the run may not "
                 f"complete. Runs with lower values will pass the queue "
                 f"more quickly.")
         self.max_walltime = Integer("Maximum Runtime (hours)", 24, doc=doc_)
 
         doc_ = (f"Enter a project code of an Supercomputing Wales project you "
-                f"wish to run under. This can  be left empty if you have only "
+                f"wish to run under. This can be left empty if you have only "
                 f"one project.")
         self.account = Text("Project Code", "", doc=doc_)
+
+        doc_ = (f"Select the partition you wish to run your job on. This may "
+                f"be useful if you have a private partition you wish to utilise. "
+                f"Defaults to 'compute' partition.")
+        self.partition = Text("Partition", "compute", doc=doc_)
+
+        doc_ = (f"Choose where local copies of remote scripts and batch data are"
+                f" saved.")
+        self.script_directory = Directory("Local script directory", 
+                dir_choices=[DEFAULT_OUTPUT_FOLDER_NAME,
+                             DEFAULT_INPUT_FOLDER_NAME,
+                             ABSOLUTE_FOLDER_NAME,
+                             DEFAULT_OUTPUT_SUBFOLDER_NAME,
+                             DEFAULT_INPUT_SUBFOLDER_NAME,],
+                value=DEFAULT_OUTPUT_SUBFOLDER_NAME, doc=doc_)
 
         doc_ = "Change cluster and edit cluster settings."
         self.cluster_settings_button = DoSomething(
@@ -137,6 +166,8 @@ class RunOnCluster(Module):
             self.measurements_in_archive,
             self.max_walltime,
             self.account,
+            self.partition,
+            self.script_directory,
             self.batch_mode,
             self.revision,
         ]
@@ -162,6 +193,8 @@ class RunOnCluster(Module):
         result += [
             self.max_walltime,
             self.account,
+            self.partition,
+            self.script_directory,
             self.cluster_settings_button,
         ]
         return result
@@ -175,6 +208,8 @@ class RunOnCluster(Module):
             self.measurements_in_archive,
             self.max_walltime,
             self.account,
+            self.partition,
+            self.script_directory
         ]
 
         return help_settings
@@ -198,12 +233,16 @@ class RunOnCluster(Module):
 
         pipeline = workspace.pipeline
 
+        original_filelist = deepcopy(pipeline.file_list) # Need to save a version to revert later
+
         if pipeline.test_mode:
             return True
         if self.batch_mode.value:
             return True
         else:
             rynner = CPRynner()
+            # Change default script directory to one set in script_directory setting
+            rynner.provider.script_dir = self.script_directory.get_absolute_path()
             if rynner is not None:
                 # Get parameters
                 max_tasks = int(cluster_tasks_per_node())
@@ -212,9 +251,10 @@ class RunOnCluster(Module):
                 # Set walltime
                 rynner.provider.walltime = str(
                     self.max_walltime.value) + ":00:00"
-
-                # save the pipeline
-                path = self.save_pipeline(workspace)
+                print("Checking rynner directories before sorting files: ")
+                print(f"Provider script_dir (local save): {rynner.provider.script_dir}")
+                print(f"Provider channel script_dir (remote destination): {rynner.provider.channel.script_dir}")
+                print(f"Rynner path: {rynner.path}")
 
                 # Create the run data structure
                 file_list = pipeline.file_list
@@ -263,30 +303,31 @@ class RunOnCluster(Module):
                     n_measurements = self.measurements_in_archive.value
                     n_image_groups = max_tasks
 
-                # Also add the pipeline
-                uploads += [[path, '.']]
-                
-                #pdb.set_trace()
-
                 # The runs are downloaded in their separate folders.
                 # They can be processed later
                 output_dir = get_default_output_directory()
                 downloads = [[f"run{g}", output_dir] for g in
                              range(n_image_groups)]
+                
+                print("Checking rynner directories before creating scripts: ")
+                print(f"Provider script_dir (local save): {rynner.provider.script_dir}")
+                print(f"Provider channel script_dir (remote destination): {rynner.provider.channel.script_dir}")
+                print(f"Rynner path: {rynner.path}")
 
                 # Create run scripts and add to uploads
                 for g in range(n_image_groups):
                     runscript_name = f"cellprofiler_run{g}"
                     local_script_path = os.path.join(rynner.provider.script_dir,
                                                      runscript_name)
-
+                    print(f"Local script path: {local_script_path}")
                     if not self.is_archive.value:
                         n_measurements = len([i for i in grouped_images if i[
                             0] == g]) / self.n_images_per_measurement.value
 
-                        script = (f"cellprofiler -c -p -r ../Batch_data.h5 -o " 
+                        script = (f"cellprofiler -c -p Batch_data.h5 -o " 
                                   f"results -i images -f 1 -l {n_measurements}" 
                                   f" 2>>../cellprofiler_output; rm -r images")
+                        script = script.replace('\r\n','\n')
 
                     else:
                         n_images_per_group = int(n_measurements / max_tasks)
@@ -301,16 +342,40 @@ class RunOnCluster(Module):
                                     g + 1) + n_additional_images
 
                         script = (f"mkdir images; cp ../images/* images; "
-                                  f"cellprofiler -c -p -r ../Batch_data.h5 -o "
+                                  f"cellprofiler -c -p Batch_data.h5 -o "
                                   f"results -i images -f {first} -l {last} 2>>"
                                   f"../cellprofiler_output; rm -r images")
+                        script = script.replace('\r\n', '\n')
 
                     with open(local_script_path, "w") as file:
                         file.write(script)
 
                     uploads += [[local_script_path, f"run{g}"]]
 
+                    # Alter URLs / file_list of pipeline to only include cluster-corrected paths to image upload destinations
+                    job_base_path = os.path.join(rynner.provider.channel.script_dir, f"run{g}/images")
+                    print(f"Remote base path for job: {job_base_path}")
+                    [*group_image_names] = [name for inds, name in grouped_images if inds == g]
+                    group_file_list = []
+                    for name in group_image_names:
+                        group_file_list += [os.path.join(job_base_path,os.path.basename(name))]
+                    workspace.pipeline.clear_urls()
+                    workspace.pipeline.add_urls(group_file_list)
+
+                    # save the pipeline on a per-node basis in directories labelled by job and subjob
+                    batch_subdir = os.path.join(self.runname.value.replace(' ','_'),f"run{g}")
+                    batch_dir = os.path.join(rynner.provider.script_dir,batch_subdir)
+                    if not os.path.exists(batch_dir):
+                        os.makedirs(batch_dir)  
+                    path = self.save_remote_pipeline(workspace,os.path.join(batch_dir,F_BATCH_DATA_H5))
+                    # Add the pipeline
+                    uploads += [[path, f"run{g}"]]    
+                    
+                    print(uploads)
+
                 # Define the job to run
+                setup_script = setup_script.replace('\r\n','\n') # Hoping to sanitise any DOS linebreaks
+
                 script = (f"{setup_script}; printf %s\\\\n "
                           f"{{0..{n_image_groups - 1}}} | xargs -P 40 -n 1 -IX "
                           f"bash -c \"cd runX ; ./cellprofiler_runX; \";")
@@ -318,22 +383,33 @@ class RunOnCluster(Module):
                 script = script.replace('\r\n', '\n')
                 script = script.replace(';;', ';')
                 print(script)
+
                 run = rynner.create_run(
                     jobname=self.runname.value.replace(' ', '_'),
                     script=script, uploads=uploads, downloads=downloads)
 
+                # Add account and partition information to run.
                 run['account'] = self.account.value
+                run['partition'] = self.partition.value
 
                 # Copy the pipeline and images accross
                 dialog = wx.GenericProgressDialog("Uploading",
                                                   "Uploading files",
                                                   style=wx.PD_APP_MODAL)
-                try:
-                    self.upload(run, dialog)
 
+                print("Checking rynner directories before submitting run: ")
+                print(f"Provider script_dir (local save): {rynner.provider.script_dir}")
+                print(f"Provider channel script_dir (remote destination): {rynner.provider.channel.script_dir}")
+                print(f"Rynner path: {rynner.path}")
+                print("Checking run path: ")
+                print(f"Run remote directory: {run.remote_dir}")
+
+                try:
+
+                    self.upload(run, dialog)
                     # Submit the run
                     dialog.Update(dialog.GetRange() - 1, "Submitting")
-                    success = CPRynner().submit(run)
+                    success = rynner.submit(run)
                     dialog.Destroy()
 
                     if success:
@@ -349,6 +425,10 @@ class RunOnCluster(Module):
                 except Exception as e:
                     dialog.Destroy()
                     raise e
+
+                # Revert pipeline file list changes for ease of future submissions
+                workspace.pipeline.clear_urls()
+                workspace.pipeline.add_urls(original_filelist)
 
             return False
 
@@ -387,10 +467,8 @@ class RunOnCluster(Module):
 
     def save_pipeline(self, workspace, outf=None):
         """Save the pipeline in Batch_data.h5
-
         Save the pickled image_set_list state in a setting and put this
         module in batch mode.
-
         if outf is not None, it is used as a file object destination.
         """
 
@@ -417,11 +495,60 @@ class RunOnCluster(Module):
                                          workspace.frame)
             # Assuming all results go to the same place,
             # output folder can be set in the script
-            pipeline.prepare_to_create_batch(target_workspace, self.alter_path)
+
             self_copy = pipeline.module(self.module_num)
             self_copy.revision.value = int(
                 re.sub(r"\.|rc\d{1}", "", cellprofiler_core.__version__))
+            
             self_copy.batch_mode.value = True
+            # Pipeline is readied for saving at this point
+            pipeline.prepare_to_create_batch(target_workspace, self.alter_path)
+            
+            pipeline.write_pipeline_measurement(m)
+            orig_pipeline.write_pipeline_measurement(m, user_pipeline=True)
+
+            return h5_path
+        finally:
+            m.close()
+
+    def save_remote_pipeline(self, workspace, outf=None):
+        
+        if outf is None:
+            path = get_default_output_directory()
+            h5_path = os.path.join(path, F_BATCH_DATA_H5)
+        else:
+            h5_path = outf 
+
+        image_set_list = workspace.image_set_list
+        pipeline = workspace.pipeline
+        m = Measurements(copy=workspace.measurements, filename=h5_path)
+
+        try:
+            assert isinstance(pipeline, Pipeline)
+            assert isinstance(m, Measurements)
+
+            orig_pipeline = pipeline
+            pipeline = pipeline.copy()
+            # this use of workspace.frame is okay, since we're called from
+            # prepare_run which happens in the main wx thread.
+            target_workspace = Workspace(pipeline, None, None, None, m,
+                                         image_set_list,
+                                         workspace.frame)
+            # Assuming all results go to the same place,
+            # output folder can be set in the script
+
+            self_copy = pipeline.module(self.module_num)
+            self_copy.revision.value = int(
+                re.sub(r"\.|rc\d{1}", "", cellprofiler_core.__version__))
+            
+            self_copy.batch_mode.value = True   
+        # Trim RunOnCluster and ClusterView modules from submitted pipeline
+            for module in reversed(pipeline.modules()): 
+                if module.module_name == "RunOnCluster" or module.module_name == "ClusterView":
+                    pipeline.remove_module(module.module_num)
+
+            pipeline.prepare_to_create_batch(target_workspace, self.alter_path)
+            
             pipeline.write_pipeline_measurement(m)
             orig_pipeline.write_pipeline_measurement(m, user_pipeline=True)
 
