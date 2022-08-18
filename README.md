@@ -11,7 +11,9 @@ Note as our plugin requires additional libraries which aren’t packaged with Ce
 When running on Linux or developing your own plugins, the most straight forward method is to copy the plugin sources to your Cellprofiler plugins directory. It is recommended to use the default ``CellProfiler\plugins`` folder as your plugin directory, but you can still have the plugins in other locations. Follow the instructions for installing CellProfiler on the [Wiki](https://github.com/CellProfiler/CellProfiler/wiki). Choose you operating system on the right side panel. Once you have installed CellProfiler, set the plugins directory in Cellprofiler preferences, then save and close CellProfiler. 
 
 Some useful guidlines for developing CellProfiler plugins:
+
 [Orientation to CellProfiler code](https://github.com/CellProfiler/CellProfiler/wiki/Orientation-to-CellProfiler-code)
+
 [CellProfiler 3 to 4 migration guide](https://github.com/CellProfiler/CellProfiler-plugins/wiki/CellProfiler-3-to-4-migration-guide)
 
 ### Previous Plugins
