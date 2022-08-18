@@ -1,9 +1,9 @@
+from datetime import datetime
 import uuid
 import os
 import pickle
 from stat import S_ISDIR
 import time
-
 from pathlib import PurePosixPath
 from box import Box  # this warning is a PyCharm bug
 import threading
@@ -35,7 +35,9 @@ class Rynner:
         if not downloads:
             downloads = []
 
-        uid = str(uuid.uuid1())
+        # uid = str(uuid.uuid1())
+        date = datetime.now().strftime("%d_%b_%y-%X")
+        uid = str(jobname)+"_"+str(date)
 
         run = Box({
             'id': uid,
@@ -44,7 +46,9 @@ class Rynner:
             'uploads': uploads,
             'downloads': downloads,
             'script': script,
-            'status': Rynner.StatusPending
+            'status': Rynner.StatusPending,
+            'account': '',
+            'partition': ''
         })
 
         return run
@@ -124,7 +128,8 @@ class Rynner:
         for upload in uploads:
             src, dest = self._parse_path(upload)
             dest = run.remote_dir.joinpath(dest).as_posix()
-
+            print(f"Source location: {src}")
+            print(f"Remote destination: {dest}")
             self.provider.channel.push_file(src, dest)
 
         run['upload_time'] = time.time()
@@ -190,7 +195,7 @@ class Rynner:
 
             # Libsubmit will refuse to overwrite an existing file.
             # We want overwriting as default behaviour and remove
-            # the file here
+            # the file here*
             dest_file = os.path.join(dest, os.path.basename(src))
             if os.path.isfile(dest_file):
                 os.remove(dest_file)
@@ -202,11 +207,11 @@ class Rynner:
 
         runscript_name = f'rynner_exec_{run.job_name}'
 
-        local_script_path = os.path.join(self.provider.channel.script_dir,
+        local_script_path = os.path.join(self.provider.script_dir,
                                          runscript_name)
-
+        print(f"Writing script into: {local_script_path}")
         with open(local_script_path, "w") as file:
-            file.write(run['script'])
+            file.write(run['script'].replace('\r\n','\n'))
 
         self.provider.channel.push_file(local_script_path,
                                         run.remote_dir.as_posix())
@@ -215,6 +220,11 @@ class Rynner:
 
         self._record_time('submit', run, execute=True)
 
+        # Add SCW account to script through overrides property of provider
+        self.provider.overrides = f"#SBATCH --account={run.account}"
+
+        # Add partition to script via provider.partition
+        self.provider.partition = run.partition
         # submit run
 
         submit_script = (f'{self._record_time("start", run)}; '
@@ -223,7 +233,9 @@ class Rynner:
                          f'cd ; '
                          f'{self._record_time("end", run)}')  # todo verify this
 
-        qid = self.provider.submit(submit_script, tasks_per_node=1)
+        submit_script.replace('\r\n','\n') # Filter out DOS linebreaks
+
+        qid = self.provider.submit(submit_script, blocksize=1, job_name = run.job_name)
         
         if qid is None:
             # Failed to submit
