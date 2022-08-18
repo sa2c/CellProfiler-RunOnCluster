@@ -4,7 +4,6 @@ clusterview and runnoncluster plugins.
 """
 
 from future import *
-
 # Libsubmit creates a .script file in the working directory.
 # To avoid clutter, we run in a temp directory
 import tempfile, os
@@ -17,6 +16,7 @@ from libsubmit import SSHChannel
 from libsubmit.providers.slurm.slurm import SlurmProvider
 from libsubmit.launchers.launchers import SimpleLauncher
 from libsubmit.channels.errors import SSHException
+from cellprofiler_core.preferences import get_default_output_directory
 
 
 class clusterSettingDialog(wx.Dialog):
@@ -210,13 +210,11 @@ def cluster_setup_script():
     if cnfg.Exists('setup_script'):
         setup_script = cnfg.Read('setup_script')
     else:
-         setup_script = """\
-module load cellprofiler;
-module load java;"""
-#         setup_script = """\        
-# module load anaconda/2021.05
-# source activate CellProfiler
-# module load java;"""
+        setup_script = """\
+                       module load cellprofiler/4.2.1;
+                       module load java;"""
+        setup_script = setup_script.replace('\r\n','\n')   ###
+        setup_script = setup_script.replace(';;', ';')     ###
     return setup_script
 
 def cluster_work_dir():
@@ -266,28 +264,32 @@ def update_cluster_parameters():
 
     dialog.Destroy()
 
+
 def _create_rynner():
     ''' Create an instance of Rynner connected to the cluster
     '''
     hostname = cluster_url()
     work_dir = cluster_work_dir()
+    local_dir = get_default_output_directory()
     tasks_per_node = cluster_tasks_per_node()
     username, password = _get_username_and_password()
     if username is not None:
 
         work_dir = work_dir.format(username=username)
+        print("Checking rynner directories on initialisation:")
+        print(f"Cluster working directory: {work_dir}")
+        # tmpdir = os.path.join(work_dir,tempfile.mkdtemp())
+        # print(f"Generated temporary directory: {tmpdir}")
 
-        tmpdir = tempfile.mkdtemp()
-    
         provider = SlurmProvider(
             'compute',
             channel=SSHChannel(
                 hostname=hostname,
                 username=username,
                 password=password,
-                script_dir=work_dir,
+                script_dir=work_dir, # Channel script_dir is where it pushes the script to
             ),
-            script_dir=tmpdir,
+            script_dir=local_dir, # Provider script_dir is where it saves the local copy
             nodes_per_block=1,
             tasks_per_node=int(tasks_per_node),
             walltime="01:00:00", # Overwritten in runoncluster.py
