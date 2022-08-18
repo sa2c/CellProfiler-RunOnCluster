@@ -8,8 +8,11 @@ A CellProfiler module for submitting batch jobs to a cluster running Slurm. Curr
 Note as our plugin requires additional libraries which aren’t packaged with CellProfiler 4.2.2rc, you’ll need to build CellProfiler from source rather than using a pre-packaged version ([Reference](https://cellprofiler-manual.s3.amazonaws.com/CellProfiler-4.0.6/help/other_plugins.html?highlight=plugins)).
 
 ### Source Installation
-When running on Linux or developing your own plugins, the most straight forward method is to copy the plugin sources to your Cellprofiler plugins directory. It is recommended to use the default ``CellProfiler\plugins`` folder as your plugin directory. 
-[CellProfiler 3 to 4 migration guide](https://github.com/CellProfiler/CellProfiler-plugins/wiki/CellProfiler-3-to-4-migration-guide) and [Orientation to CellProfiler code](https://github.com/CellProfiler/CellProfiler/wiki/Orientation-to-CellProfiler-code) are some useful guidlines for developing CellProfiler plugins. Follow the instructions for installing CellProfiler on the [Wiki](https://github.com/CellProfiler/CellProfiler/wiki). Choose you operating system on the right side panel. Once you have installed CellProfiler, set the plugins directory in Cellprofiler preferences, then save and close CellProfiler. 
+When running on Linux or developing your own plugins, the most straight forward method is to copy the plugin sources to your Cellprofiler plugins directory. It is recommended to use the default ``CellProfiler\plugins`` folder as your plugin directory, but you can still have the plugins in other locations. Follow the instructions for installing CellProfiler on the [Wiki](https://github.com/CellProfiler/CellProfiler/wiki). Choose you operating system on the right side panel. Once you have installed CellProfiler, set the plugins directory in Cellprofiler preferences, then save and close CellProfiler. 
+
+Some useful guidlines for developing CellProfiler plugins:
+[Orientation to CellProfiler code](https://github.com/CellProfiler/CellProfiler/wiki/Orientation-to-CellProfiler-code)
+[CellProfiler 3 to 4 migration guide](https://github.com/CellProfiler/CellProfiler-plugins/wiki/CellProfiler-3-to-4-migration-guide)
 
 ### Previous Plugins
 [Previous plugins](https://github.com/sa2c/CellProfiler-RunOnCluster/archive/master.zip) DON'T FULLY WORK with the precompiled CellProfile executable (version 3.1.8). They have default settings for the SCW Sunbird cluster, which can be found in [releases](https://github.com/sa2c/CellProfiler-RunOnCluster/releases/download/v1.0/CellProfiler.exe). These executables require that a Java Runtime Environment is installed. You can get one for example form [Java](https://www.java.com/en/download/).
@@ -26,6 +29,7 @@ If `pip install` does not install the `Rynner` library properly (i.e. there is n
 
 ## Usage
 ### Submitting to Cluster
+
 Once you have tested your pipeline on your local machine, add all images to be processed into the Images plugin in the usual way. Add the `RunOnCluster` module in the `Other` category to the end of the pipeline.
 
 The module has four settings:
