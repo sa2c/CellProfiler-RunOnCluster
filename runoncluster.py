@@ -325,9 +325,9 @@ class RunOnCluster(Module):
                         n_measurements = len([i for i in grouped_images if i[
                             0] == g]) / self.n_images_per_measurement.value
 
-                        script = (f"cellprofiler -c -p Batch_data.h5 -o " 
+                        script = (f"singularity exec $CELLPROFILER_IMG cellprofiler -c -p Batch_data.h5 -o " 
                                   f"results -i images -f 1 -l {n_measurements}" 
-                                  f" 2>>../cellprofiler_output; rm -r images")
+                                  f" 2>>../cellprofiler_output")
                         script = script.replace('\r\n','\n')
 
                     else:
@@ -342,10 +342,9 @@ class RunOnCluster(Module):
                             last = n_images_per_group * (
                                     g + 1) + n_additional_images
 
-                        script = (f"mkdir images; cp ../images/* images; "
-                                  f"cellprofiler -c -p Batch_data.h5 -o "
+                        script = (f"singularity exec $CELLPROFILER_IMG cellprofiler -c -p Batch_data.h5 -o "
                                   f"results -i images -f {first} -l {last} 2>>"
-                                  f"../cellprofiler_output; rm -r images")
+                                  f"../cellprofiler_output;")
                         script = script.replace('\r\n', '\n')
 
                     with open(local_script_path, "w") as file:
@@ -375,13 +374,13 @@ class RunOnCluster(Module):
                     print(uploads)
 
                 # Define the job to run
-                setup_script = setup_script.replace('\r\n','\n') # Hoping to sanitise any DOS linebreaks
+                setup_script = setup_script.replace("\r\n","\n") # Hoping to sanitise any DOS linebreaks
                 script = (f"{setup_script}; printf %s\\\\n "
                           f"{{0..{n_image_groups - 1}}} | xargs -P 40 -n 1 -IX "
                           f"bash -c \"cd runX ; ./cellprofiler_runX; \";")
 
-                script = script.replace('\r\n', '\n')
-                script = script.replace(';;', ';')
+                script = script.replace("\r\n", "\n")
+                script = script.replace(";;", ";")
                 print(script)
                 run = rynner.create_run(
                     jobname=self.runname.value.replace(' ', '_'),
