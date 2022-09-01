@@ -52,6 +52,7 @@ from CPRynner.CPRynner import CPRynner
 from CPRynner.CPRynner import update_cluster_parameters
 from CPRynner.CPRynner import cluster_tasks_per_node
 from CPRynner.CPRynner import cluster_setup_script
+from CPRynner.CPRynner import cluster_run_command
 from CPRynner.CPRynner import cluster_max_runtime
 
 
@@ -246,6 +247,7 @@ class RunOnCluster(Module):
                 # Get parameters
                 max_tasks = int(cluster_tasks_per_node())
                 setup_script = cluster_setup_script()
+                run_command = cluster_run_command()
 
                 # Set walltime
                 rynner.provider.walltime = str(
@@ -322,30 +324,29 @@ class RunOnCluster(Module):
                                                      runscript_name)
                     print(f"Local script path: {local_script_path}")
                     if not self.is_archive.value:
-                        n_measurements = len([i for i in grouped_images if i[
-                            0] == g]) / self.n_images_per_measurement.value
+                        n_measurements = int(len([i for i in grouped_images if i[
+                            0] == g]) / self.n_images_per_measurement.value)
 
-                        script = (f"singularity exec $CELLPROFILER_IMG cellprofiler -c -p Batch_data.h5 -o " 
+                        script = (f"{run_command} -p Batch_data.h5 -o " 
                                   f"results -i images -f 1 -l {n_measurements}" 
                                   f" 2>>../cellprofiler_output")
-                        script = script.replace('\r\n','\n')
+                        script = script.replace("\r\n","\n")
 
                     else:
                         n_images_per_group = int(n_measurements / max_tasks)
                         n_additional_images = int(n_measurements % max_tasks)
 
                         if g < n_additional_images:
-                            first = (n_images_per_group + 1) * g
-                            last = (n_images_per_group + 1) * (g + 1)
+                            first = int((n_images_per_group + 1) * g)
+                            last = int((n_images_per_group + 1) * (g + 1))
                         else:
-                            first = n_images_per_group * g + n_additional_images
-                            last = n_images_per_group * (
-                                    g + 1) + n_additional_images
+                            first = int(n_images_per_group * g + n_additional_images)
+                            last = int(n_images_per_group * (g + 1) + n_additional_images)
 
-                        script = (f"singularity exec $CELLPROFILER_IMG cellprofiler -c -p Batch_data.h5 -o "
+                        script = (f"{run_command} -p Batch_data.h5 -o "
                                   f"results -i images -f {first} -l {last} 2>>"
                                   f"../cellprofiler_output;")
-                        script = script.replace('\r\n', '\n')
+                        script = script.replace("\r\n", "\n")
 
                     with open(local_script_path, "w") as file:
                         file.write(script)
@@ -359,8 +360,8 @@ class RunOnCluster(Module):
                     group_file_list = []
                     for name in group_image_names:
                         group_file_list += [os.path.join(job_base_path,os.path.basename(name))]
-                    workspace.pipeline.clear_urls()
-                    workspace.pipeline.add_urls(group_file_list)
+                    # workspace.pipeline.clear_urls()
+                    # workspace.pipeline.add_urls(group_file_list)
 
                     # save the pipeline on a per-node basis in directories labelled by job and subjob
                     batch_subdir = os.path.join(self.runname.value.replace(' ','_'),f"run{g}")
@@ -425,8 +426,8 @@ class RunOnCluster(Module):
                     raise e
 
                 # Revert pipeline file list changes for ease of future submissions
-                workspace.pipeline.clear_urls()
-                workspace.pipeline.add_urls(original_filelist)
+                # workspace.pipeline.clear_urls()
+                # workspace.pipeline.add_urls(original_filelist)
 
             return False
 
@@ -539,14 +540,15 @@ class RunOnCluster(Module):
             self_copy.revision.value = int(
                 re.sub(r"\.|rc\d{1}", "", cellprofiler_core.__version__))
             
-            self_copy.batch_mode.value = True   
         # Trim RunOnCluster and ClusterView modules from submitted pipeline
             for module in reversed(pipeline.modules()): 
                 if module.module_name == "RunOnCluster" or module.module_name == "ClusterView":
                     pipeline.remove_module(module.module_num)
 
+            self_copy.batch_mode.value = True
+
             pipeline.prepare_to_create_batch(target_workspace, self.alter_path)
-            
+
             pipeline.write_pipeline_measurement(m)
             orig_pipeline.write_pipeline_measurement(m, user_pipeline=True)
 

@@ -25,9 +25,9 @@ class clusterSettingDialog(wx.Dialog):
     A dialog window for setting cluster parameters
     """
 
-    def __init__(self, cluster_address, tasks_per_node, work_dir, setup_script ):
+    def __init__(self, cluster_address, tasks_per_node, work_dir, setup_script, run_command ):
         """Constructor"""
-        super(clusterSettingDialog, self).__init__(None, title="Login", size = (420,480))
+        super(clusterSettingDialog, self).__init__(None, title="Login", size = (420,540))
 
         self.panel = wx.Panel(self)
 
@@ -84,6 +84,18 @@ class clusterSettingDialog(wx.Dialog):
         self.setup_script = wx.TextCtrl(self.panel, value = setup_script, size=(400, 80), style=wx.TE_MULTILINE)
         setup_script_field_sizer.Add(self.setup_script, 0, wx.ALL, 5)
 
+        # run_command field
+        run_command_label_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        run_command_label = wx.StaticText(self.panel, label="Run Command:", size=(100,-1))
+        run_command_label.SetToolTip(wx.ToolTip(
+            "Bash command to execute CellProfiler on the nodes specified in the job script. Command line options for pipeline, image sets and output are specified automatically later."
+        ))
+        run_command_label_sizer.Add(run_command_label, 0, wx.ALL|wx.CENTER, 5)
+
+        run_command_field_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.run_command = wx.TextCtrl(self.panel, value = run_command, size=(400,80), style=wx.TE_MULTILINE)
+        run_command_field_sizer.Add(self.run_command, 0, wx.ALL, 5)
+
         # The Ok and Cancel button
         button_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.ok_button = wx.Button(self.panel, wx.ID_OK, label="Ok", size=(60, 30))
@@ -108,6 +120,8 @@ class clusterSettingDialog(wx.Dialog):
         main_sizer.Add(work_dir_sizer, 0, wx.ALL, 5)
         main_sizer.Add(setup_script_label_sizer, 0, wx.ALL, 5)
         main_sizer.Add(setup_script_field_sizer, 0, wx.ALL, 5)
+        main_sizer.Add(run_command_label_sizer, 0, wx.ALL, 5)
+        main_sizer.Add(run_command_field_sizer, 0, wx.ALL, 5)
         main_sizer.Add(button_sizer, 0, wx.ALL | wx.ALIGN_CENTER, 5)
  
         self.panel.SetSizer(main_sizer)
@@ -216,6 +230,15 @@ module load cellprofiler;
 module load java;"""
     return setup_script
 
+def cluster_run_command():
+    cnfg = wx.Config('CPRynner')
+    if cnfg.Exists('run_command'):
+        run_command = cnfg.Read('run_command')
+    else:
+        run_command = """\
+singularity exec $CELLPROFILER_IMG cellprofiler -c"""
+    return run_command
+
 def cluster_work_dir():
     cnfg = wx.Config('CPRynner')
     if cnfg.Exists('work_dir'):
@@ -245,7 +268,8 @@ def update_cluster_parameters():
     work_dir = cluster_work_dir()
     tasks_per_node = cluster_tasks_per_node()
     setup_script = cluster_setup_script()
-    dialog = clusterSettingDialog( cluster_address, tasks_per_node, work_dir, setup_script )
+    run_command = cluster_run_command()
+    dialog = clusterSettingDialog( cluster_address, tasks_per_node, work_dir, setup_script, run_command )
     result = dialog.ShowModal()
     if result == wx.ID_OK:
         cluster_address = dialog.cluster_address.GetValue()
@@ -260,6 +284,7 @@ def update_cluster_parameters():
         cnfg.Write('max_runtime', str(max_runtime))
         cnfg.Write('work_dir', work_dir)
         cnfg.Write('setup_script', setup_script)
+        cnfg.Write('run_command', run_command)
 
     dialog.Destroy()
 
