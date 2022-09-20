@@ -1,21 +1,16 @@
 """
 RunOnCluster
 ================
-
 **RunOnCluster** submits the pipeline and images to run on
 an HPC cluster.
-
 The plugin uses the Rynner library, which in turn uses libsubmit,
 to copy the input files and the pipeline to the cluster. The image
 files are divided into separate run folders for each core, which
 will then be processed independently. The download method in the
 ClusterView plugin automatically combines these back into a single
 result folder.
-
 Should be placed at the end of the image processing pipeline.
-
 |
-
 ============ ============ ===============
 Supports 2D? Supports 3D? Respects masks?
 ============ ============ ===============
@@ -29,6 +24,7 @@ from typing import List
 import wx
 import logging
 logger = logging.getLogger(__name__)
+
 from copy import deepcopy
 
 import cellprofiler_core
@@ -302,7 +298,7 @@ class RunOnCluster(Module):
 
                     n_measurements = self.measurements_in_archive.value
                     n_image_groups = max_tasks
-
+                
                 # The runs are downloaded in their separate folders.
                 # They can be processed later
                 output_dir = get_default_output_directory()
@@ -324,9 +320,9 @@ class RunOnCluster(Module):
                         n_measurements = len([i for i in grouped_images if i[
                             0] == g]) / self.n_images_per_measurement.value
 
-                        script = (f"cellprofiler -c -p Batch_data.h5 -o " 
+                        script = (f"singularity exec $CELLPROFILER_IMG cellprofiler -c -p Batch_data.h5 -o " 
                                   f"results -i images -f 1 -l {n_measurements}" 
-                                  f" 2>>../cellprofiler_output; rm -r images")
+                                  f" 2>>../cellprofiler_output")
                         script = script.replace('\r\n','\n')
 
                     else:
@@ -341,10 +337,9 @@ class RunOnCluster(Module):
                             last = n_images_per_group * (
                                     g + 1) + n_additional_images
 
-                        script = (f"mkdir images; cp ../images/* images; "
-                                  f"cellprofiler -c -p Batch_data.h5 -o "
+                        script = (f"singularity exec $CELLPROFILER_IMG cellprofiler -c -p Batch_data.h5 -o "
                                   f"results -i images -f {first} -l {last} 2>>"
-                                  f"../cellprofiler_output; rm -r images")
+                                  f"../cellprofiler_output;")
                         script = script.replace('\r\n', '\n')
 
                     with open(local_script_path, "w") as file:
@@ -374,16 +369,14 @@ class RunOnCluster(Module):
                     print(uploads)
 
                 # Define the job to run
-                setup_script = setup_script.replace('\r\n','\n') # Hoping to sanitise any DOS linebreaks
-
+                setup_script = setup_script.replace("\r\n","\n") # Hoping to sanitise any DOS linebreaks
                 script = (f"{setup_script}; printf %s\\\\n "
                           f"{{0..{n_image_groups - 1}}} | xargs -P 40 -n 1 -IX "
                           f"bash -c \"cd runX ; ./cellprofiler_runX; \";")
 
-                script = script.replace('\r\n', '\n')
-                script = script.replace(';;', ';')
+                script = script.replace("\r\n", "\n")
+                script = script.replace(";;", ";")
                 print(script)
-
                 run = rynner.create_run(
                     jobname=self.runname.value.replace(' ', '_'),
                     script=script, uploads=uploads, downloads=downloads)
