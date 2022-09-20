@@ -4,6 +4,7 @@ clusterview and runnoncluster plugins.
 """
 
 from future import *
+
 # Libsubmit creates a .script file in the working directory.
 # To avoid clutter, we run in a temp directory
 import tempfile, os
@@ -211,10 +212,8 @@ def cluster_setup_script():
         setup_script = cnfg.Read('setup_script')
     else:
         setup_script = """\
-                       module load cellprofiler/4.2.1;
-                       module load java;"""
-        setup_script = setup_script.replace('\r\n','\n')   ###
-        setup_script = setup_script.replace(';;', ';')     ###
+module load cellprofiler/4.2.1;
+module load java;"""
     return setup_script
 
 def cluster_work_dir():
