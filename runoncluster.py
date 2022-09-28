@@ -317,30 +317,29 @@ class RunOnCluster(Module):
                                                      runscript_name)
                     print(f"Local script path: {local_script_path}")
                     if not self.is_archive.value:
-                        n_measurements = len([i for i in grouped_images if i[
-                            0] == g]) / self.n_images_per_measurement.value
+                        n_measurements = int(len([i for i in grouped_images if i[
+                            0] == g]) / self.n_images_per_measurement.value)
 
                         script = (f"singularity exec $CELLPROFILER_IMG cellprofiler -c -p Batch_data.h5 -o " 
                                   f"results -i images -f 1 -l {n_measurements}" 
                                   f" 2>>../cellprofiler_output")
-                        script = script.replace('\r\n','\n')
+                        script = script.replace("\r\n","\n")
 
                     else:
                         n_images_per_group = int(n_measurements / max_tasks)
                         n_additional_images = int(n_measurements % max_tasks)
 
                         if g < n_additional_images:
-                            first = (n_images_per_group + 1) * g
-                            last = (n_images_per_group + 1) * (g + 1)
+                            first = int((n_images_per_group + 1) * g)
+                            last = int((n_images_per_group + 1) * (g + 1))
                         else:
-                            first = n_images_per_group * g + n_additional_images
-                            last = n_images_per_group * (
-                                    g + 1) + n_additional_images
+                            first = int(n_images_per_group * g + n_additional_images)
+                            last = int(n_images_per_group * (g + 1) + n_additional_images)
 
                         script = (f"singularity exec $CELLPROFILER_IMG cellprofiler -c -p Batch_data.h5 -o "
                                   f"results -i images -f {first} -l {last} 2>>"
                                   f"../cellprofiler_output;")
-                        script = script.replace('\r\n', '\n')
+                        script = script.replace("\r\n", "\n")
 
                     with open(local_script_path, "w") as file:
                         file.write(script)
@@ -354,7 +353,7 @@ class RunOnCluster(Module):
                     group_file_list = []
                     for name in group_image_names:
                         group_file_list += [os.path.join(job_base_path,os.path.basename(name))]
-                    workspace.pipeline.clear_urls()
+                    #workspace.pipeline.clear_urls()
                     workspace.pipeline.add_urls(group_file_list)
 
                     # save the pipeline on a per-node basis in directories labelled by job and subjob
@@ -369,10 +368,11 @@ class RunOnCluster(Module):
                     print(uploads)
 
                 # Define the job to run
-                setup_script = setup_script.replace("\r\n","\n") # Hoping to sanitise any DOS linebreaks
-                script = (f"{setup_script}; printf %s\\\\n "
+                setup_script = setup_script.replace('\r\n','\n') # Hoping to sanitise any DOS linebreaks
+                script = (f"{setup_script}"
+                          f"printf %s\\\\n "
                           f"{{0..{n_image_groups - 1}}} | xargs -P 40 -n 1 -IX "
-                          f"bash -c \"cd runX ; ./cellprofiler_runX; \";")
+                          f"bash -c \"cd runX ; ./cellprofiler_runX; \"; ")
 
                 script = script.replace("\r\n", "\n")
                 script = script.replace(";;", ";")
@@ -501,6 +501,7 @@ class RunOnCluster(Module):
             orig_pipeline.write_pipeline_measurement(m, user_pipeline=True)
 
             return h5_path
+
         finally:
             m.close()
 
@@ -546,5 +547,6 @@ class RunOnCluster(Module):
             orig_pipeline.write_pipeline_measurement(m, user_pipeline=True)
 
             return h5_path
+            
         finally:
             m.close()
