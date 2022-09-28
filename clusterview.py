@@ -109,6 +109,20 @@ class ClusterviewFrame(wx.Frame):
         self.panel.SetAutoLayout(1)
         self.panel.SetupScrolling(scroll_x=False, scroll_y=True)
 
+    def update( self ):
+        """
+        Update the run list
+        """
+        rynner = CPRynner.CPRynner()
+        if rynner is not None:
+            self.runs = [ r for r in rynner.get_runs() if 'upload_time' in r ]
+            rynner.update(self.runs)
+            for run in self.runs:
+                run['status_time'] = rynner.read_time(run)
+            self.update_time = datetime.datetime.now()
+        else:
+            self.runs = []
+
     def build_view(self, vbox):
         # Build the contents for the window
 
@@ -159,10 +173,10 @@ class ClusterviewFrame(wx.Frame):
             hbox1 = wx.BoxSizer(wx.HORIZONTAL)
             hbox1.Add(st, flag=wx.RIGHT, border=8)
             vbox.Add(hbox1, flag=wx.EXPAND|wx.LEFT|wx.RIGHT|wx.TOP)
-
+            
             # The state of the run
             hbox2 = wx.BoxSizer(wx.HORIZONTAL)
-            time_since = str(datetime.datetime.fromtimestamp(int(run['status_time'])))
+            time_since = int(datetime.datetime.fromtimestamp(int(run['status_time']))) #Error 1
             st2 = wx.StaticText( self.panel,
                 label=run.status+" since " + time_since
             )
@@ -237,22 +251,6 @@ class ClusterviewFrame(wx.Frame):
         self.build_view(self.vbox)
         self.vbox.Layout()
         self.FitInside()
-
-    def update( self ):
-        """
-        Update the run list
-        """
-        rynner = CPRynner.CPRynner()
-        if rynner is not None:
-            self.runs = [ r for r in rynner.get_runs() if 'upload_time' in r ]
-            rynner.update(self.runs)
-            for run in self.runs:
-                run['status_time'] = rynner.read_time(run)
-            self.update_time = datetime.datetime.now()
-        else:
-            self.runs = []
-
-
 
     def download( self, run ):
         """
