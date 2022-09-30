@@ -27,7 +27,7 @@ inflect==2.1.0
 ipaddress==1.0.22
 javabridge==1.0.18
 jmespath==0.9.3
-joblib==0.13.1
+joblib==1.2.0
 kiwisolver==1.0.1
 libsubmit==0.5.0
 mahotas==1.4.5
