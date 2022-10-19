@@ -17,17 +17,23 @@ Some useful guidlines for developing CellProfiler plugins:
 [CellProfiler 3 to 4 migration guide](https://github.com/CellProfiler/CellProfiler-plugins/wiki/CellProfiler-3-to-4-migration-guide)
 
 ### Previous Plugins
-[Previous plugins](https://github.com/sa2c/CellProfiler-RunOnCluster/archive/master.zip) DON'T FULLY WORK with the precompiled CellProfile executable (version 3.1.8). They have default settings for the SCW Sunbird cluster, which can be found in [releases](https://github.com/sa2c/CellProfiler-RunOnCluster/releases/download/v1.0/CellProfiler.exe). These executables require that a Java Runtime Environment is installed. You can get one for example form [Java](https://www.java.com/en/download/).
+Please note [Previous plugins](https://github.com/sa2c/CellProfiler-RunOnCluster/archive/master.zip) do not fully work with the precompiled CellProfile executable (version 3.1.8), which has default settings for the SCW Sunbird cluster, can be found in [releases](https://github.com/sa2c/CellProfiler-RunOnCluster/releases/download/v1.0/CellProfiler.exe). These executables require that a Java Runtime Environment is installed. You can get one for example form [Java](https://www.java.com/en/download/).
 
 ### Latest Plugins
-Please download the [latest plugins](https://github.com/sa2c/CellProfiler-RunOnCluster/archive/CellProfiler4.zip) from this branch and move the files to your plugins directory. In the plugins directory, install the [Rynner](https://github.com/sa2c/Rynner) module and additional requirements for the plugins:
+Please download the [latest plugins](https://codeload.github.com/sa2c/CellProfiler-RunOnCluster/zip/refs/heads/cellprofiler-4.2.2rc) from this branch and move the files to your plugins directory. In the plugins directory, install the [Rynner](https://github.com/sa2c/Rynner) module and additional requirements for the plugins:
 
 ```
-pip install git+https://github.com/sa2c/Rynner.git
 python -m pip install -r requirements.txt
 ```
 
-If `pip install` does not install the `Rynner` library properly (i.e. there is no ``Rynner`` folder inside ``site-packages``.). You should copy the `Rynner` folder in this repository and paste it inside ``side-packages``.
+Optional steps are:
+
+```
+pip install git+https://github.com/sa2c/Rynner.git@windows-patch
+pip install git+https://github.com/MYPei/libsubmit.git@python3-update
+```
+
+If `pip install` does not install the `Rynner` library properly (i.e. there is no ``Rynner`` folder inside ``site-packages``.). You should copy the `Rynner` folder in this repository and paste it inside ``side-packages``. You may also need to copy the `libsubmit` folder in this branch to ``side-packages``.
 
 ## Usage
 ### Submitting josb to cluster
