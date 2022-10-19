@@ -4,6 +4,7 @@ import os
 import pickle
 from stat import S_ISDIR
 import time
+
 from pathlib import PurePosixPath
 from box import Box  # this warning is a PyCharm bug
 import threading
@@ -210,8 +211,8 @@ class Rynner:
         local_script_path = os.path.join(self.provider.script_dir,
                                          runscript_name)
         print(f"Writing script into: {local_script_path}")
-        with open(local_script_path, "w") as file:
-            file.write(run['script'].replace('\r\n','\n'))
+        with open(local_script_path, "wb") as file:
+            file.write(run['script'].replace('\r\n','\n').encode())
 
         self.provider.channel.push_file(local_script_path,
                                         run.remote_dir.as_posix())
@@ -234,6 +235,7 @@ class Rynner:
                          f'{self._record_time("end", run)}')  # todo verify this
 
         submit_script.replace('\r\n','\n') # Filter out DOS linebreaks
+        submit_script.replace('%TEST4%','STEP4')
 
         qid = self.provider.submit(submit_script, blocksize=1, job_name = run.job_name)
         
