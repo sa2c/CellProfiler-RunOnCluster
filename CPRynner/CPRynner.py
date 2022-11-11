@@ -224,10 +224,9 @@ def cluster_setup_script():
     cnfg = wx.Config('CPRynner')
     if cnfg.Exists('setup_script'):
         setup_script = cnfg.Read('setup_script')
+        setup_script = setup_script.replace('/r/n','/n')
     else:
-        setup_script = """\
-module load cellprofiler;
-module load java;"""
+        setup_script = "module load cellprofiler; module load java;"
     return setup_script
 
 def cluster_run_command():
@@ -235,8 +234,7 @@ def cluster_run_command():
     if cnfg.Exists('run_command'):
         run_command = cnfg.Read('run_command')
     else:
-        run_command = """\
-singularity exec $CELLPROFILER_IMG cellprofiler -c"""
+        run_command = "singularity exec $CELLPROFILER_IMG cellprofiler -c"
     return run_command
 
 def cluster_work_dir():

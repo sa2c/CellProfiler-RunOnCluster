@@ -250,8 +250,10 @@ class ClusterviewFrame(wx.Frame):
         if rynner is not None:
             self.runs = [ r for r in rynner.get_runs() if 'upload_time' in r ]
             rynner.update(self.runs)
+            print(f"Number of runs found: {self.runs.count}")
             for run in self.runs:
                 run['status_time'] = rynner.read_time(run)
+                print(f"Run {run} checked.")
             self.update_time = datetime.datetime.now()
         else:
             self.runs = []
@@ -524,7 +526,7 @@ class clusterView(cpm.Module):
         """
         rynner = CPRynner.CPRynner()
         if rynner is not None:
-            self.runs = [ r for r in rynner.get_runs() if 'upload_time' in r ]
+            self.runs = [ r for r in rynner.get_runs()] # if 'upload_time' in r ]
             rynner.update(self.runs)
             for run in self.runs:
                 run['status_time'] = rynner.read_time(run)
@@ -532,9 +534,16 @@ class clusterView(cpm.Module):
         else:
             self.runs = []
         self.run_names = []
-        for r in self.runs:
-            self.run_names[r] = self.runs.job_name[r]
-        self.run_names += ["None"]
+        print(f"Number of runs detected: {len(self.runs)}")
+        for r in range(len(self.runs)):
+            run = self.runs[r]
+            print(f"{run['job_name']}")
+            self.run_names += [(run['job_name']+' ('+run['qid']+')')]
+        self.run_names += ["None"]        
+        doc_ = "Select a CellProfiler job that has been run on the cluster."
+        self.choose_run = cps.choice.Choice(
+            "Select CellProfiler cluster run.", choices=self.run_names, value="None", doc = doc_)
+        pass
 
     def on_logout_click( self ):
         CPRynner.logout()
@@ -552,7 +561,7 @@ class clusterView(cpm.Module):
         self.update_module()
 
     def run_status_window(self):
-        run = self.runs[self.choose_run.index(self.choose_run.value)]
+        run = self.runs[self.run_names.index(self.choose_run.value)]
         frame = RunStatusFrame(wx.GetApp().frame,self.choose_run.value,run)
         frame.Show()
         pass
@@ -580,7 +589,7 @@ class RunStatusFrame(wx.Frame):
     A pop-up window that displays the state of the chosen run and offers a download button if completed.
     """
     def __init__(self, parent, title, run):
-        super(RunStatusFrame, self).__init__(parent, title = title, size = (400,200))
+        super(RunStatusFrame, self).__init__(parent, title = title, size = (500,200))
         self.run = run
         self.run_complete = False
         self.download_num = 0
@@ -594,10 +603,14 @@ class RunStatusFrame(wx.Frame):
         self.panel = wx.Panel(self)
         self.panel.SetBackgroundColour('#ededed')
 
-        run_text = wx.StaticText(self.panel, label=("Run name: "+self.run.job_name))
+        run_text = wx.StaticText(self.panel, label=("Run name: "+self.run['job_name']))
         run_text.SetFont(font)
-        self.status_text = wx.StaticText(self.panel, label="Run status:   PENDING")
-        self.status_text.SetFont(font)           
+        self.status_text = wx.StaticText(self.panel, label=("Run status: "+self.run['status']))
+        self.status_text.SetFont(font)
+        self.id_text = wx.StaticText(self.panel, label="Queue ID: N/A")
+        self.id_text.SetFont(font)
+        if self.run['status']!='Pending':
+            self.id_text.SetLabel("Queue ID: "+self.run['qid'])
 
         # Create a download button                
         self.download_number_text = wx.StaticText(self.panel, label="Times downloaded:   0")
@@ -626,6 +639,9 @@ class RunStatusFrame(wx.Frame):
         run_hbox.Add(run_text, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 8)
         run_hbox.Add(vline, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 8)
         run_hbox.Add(self.status_text, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 8)
+        vline = wx.StaticLine(self.panel, style=wx.LI_VERTICAL)
+        run_hbox.Add(vline, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 8)
+        run_hbox.Add(self.id_text, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 8)
         # Add the run name to the box sizer.
         self.vbox.Add(run_hbox, 0, wx.EXPAND, 10)
         # Vertical line for spacing
@@ -661,8 +677,10 @@ class RunStatusFrame(wx.Frame):
 
     def on_update_click(self, event):
         self.update_time = datetime.datetime.now()
-        self.status_text.SetLabel("Run status:  COMPLETE")
-        self.run_complete = True
+        self.status_text.SetLabel("Run status: "+self.run['status'])
+        if self.run['status']!='Pending':
+            self.id_text.SetLabel("Queue ID: "+self.run['qid'])
+        self.run_complete = self.run['status']=='Complete'
         self.download_avail_text.SetLabel("Download available?:   "+str(self.run_complete))
         self.download_button.Enable()
 

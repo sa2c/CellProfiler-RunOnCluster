@@ -360,8 +360,6 @@ class RunOnCluster(Module):
                     group_file_list = []
                     for name in group_image_names:
                         group_file_list += [os.path.join(job_base_path,os.path.basename(name))]
-                    # workspace.pipeline.clear_urls()
-                    # workspace.pipeline.add_urls(group_file_list)
 
                     # save the pipeline on a per-node basis in directories labelled by job and subjob
                     batch_subdir = os.path.join(self.runname.value.replace(' ','_'),f"run{g}")
@@ -375,12 +373,12 @@ class RunOnCluster(Module):
                     print(uploads)
 
                 # Define the job to run
-                setup_script = setup_script.replace("\r\n","\n") # Hoping to sanitise any DOS linebreaks
+                setup_script = setup_script.replace('\r\n','\n') # Hoping to sanitise any DOS linebreaks
                 script = (f"{setup_script}; printf %s\\\\n "
                           f"{{0..{n_image_groups - 1}}} | xargs -P 40 -n 1 -IX "
                           f"bash -c \"cd runX ; ./cellprofiler_runX; \";")
 
-                script = script.replace("\r\n", "\n")
+                script = script.replace('\r\n', '\n')
                 script = script.replace(";;", ";")
                 print(script)
                 run = rynner.create_run(
