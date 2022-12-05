@@ -260,8 +260,6 @@ class ClusterviewFrame(wx.Frame):
         else:
             self.runs = []
 
-
-
     def download( self, run ):
         """
         Ask for a destination folder, download files in the results

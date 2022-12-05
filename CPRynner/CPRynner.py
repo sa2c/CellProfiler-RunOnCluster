@@ -224,7 +224,7 @@ def cluster_setup_script():
     cnfg = wx.Config('CPRynner')
     if cnfg.Exists('setup_script'):
         setup_script = cnfg.Read('setup_script')
-        setup_script = setup_script.replace('/r/n','/n')
+        setup_script = setup_script.replace('\r\n','\n')
     else:
         setup_script = "module load cellprofiler; module load java;"
     return setup_script

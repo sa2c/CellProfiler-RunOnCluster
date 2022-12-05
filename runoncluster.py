@@ -75,13 +75,6 @@ class RunOnCluster(Module):
     def upload(run, dialog=None):
         rynner = CPRynner()
 
-        print("Checking rynner paths before upload: ")
-        print(f"Provider script_dir: {rynner.provider.script_dir}")
-        print(f"Provider channel script_dir: {rynner.provider.channel.script_dir}")
-        print(f"Rynner path: {rynner.path}")
-        print("Checking run path: ")
-        print(f"Run remote directory: {run.remote_dir}")
-
         if dialog is None:
             dialog = wx.GenericProgressDialog("Uploading", "Uploading files")
         destroy_dialog = True if dialog is None else False
@@ -278,6 +271,7 @@ class RunOnCluster(Module):
         if end_script[-1] != ";":
             end_script = end_script+";"
         end_script = end_script.replace("\r\n","\n")
+        end_script = end_script.lstrip(";") # Remove leading semicolons
         return end_script
 
     def create_run_scripts(self,workspace,rynner,uploads,n_image_groups,grouped_images):
@@ -371,59 +365,9 @@ class RunOnCluster(Module):
                 # Create run scripts and add to uploads with create_run_scripts
                 uploads = self.create_run_scripts(workspace,rynner,uploads,n_image_groups,grouped_images)
 
-                # for g in range(n_image_groups):
-                #     runscript_name = f"cellprofiler_run{g}"
-                #     local_script_path = os.path.join(rynner.provider.script_dir,
-                #                                      runscript_name)
-                #     print(f"Local script path: {local_script_path}")
-                #     if not self.is_archive.value:
-                #         n_measurements = int(len([i for i in grouped_images if i[
-                #             0] == g]) / self.n_images_per_measurement.value)
-
-                #         script = (f"{run_command} -p Batch_data.h5 -o " 
-                #                   f"results -i images -f 1 -l {n_measurements}" 
-                #                   f" 2>>../cellprofiler_output")
-                #         script = script.replace("\r\n","\n")
-
-                #     else:
-                #         n_images_per_group = int(n_measurements / max_tasks)
-                #         n_additional_images = int(n_measurements % max_tasks)
-
-                #         if g < n_additional_images:
-                #             first = int((n_images_per_group + 1) * g)
-                #             last = int((n_images_per_group + 1) * (g + 1))
-                #         else:
-                #             first = int(n_images_per_group * g + n_additional_images)
-                #             last = int(n_images_per_group * (g + 1) + n_additional_images)
-
-                #         script = (f"{run_command} -p Batch_data.h5 -o "
-                #                   f"results -i images -f {first} -l {last} 2>>"
-                #                   f"../cellprofiler_output;")
-                #         script = script.replace("\r\n", "\n")
-
-                #     with open(local_script_path, "w") as file:
-                #         file.write(script)
-
-                #     uploads += [[local_script_path, f"run{g}"]]
-
-                #     # save the pipeline on a per-node basis in directories labelled by job and subjob
-                #     batch_subdir = os.path.join(self.runname.value.replace(' ','_'),f"run{g}")
-                #     batch_dir = os.path.join(rynner.provider.script_dir,batch_subdir)
-                #     if not os.path.exists(batch_dir):
-                #         os.makedirs(batch_dir)  
-                #     path = self.save_remote_pipeline(workspace,os.path.join(batch_dir,F_BATCH_DATA_H5))
-                #     # Add the pipeline
-                #     uploads += [[path, f"run{g}"]]    
-
                 # Define the job to run in create_job_script
                 script = self.create_job_script(n_image_groups)
-                # setup_script = setup_script.replace('\r\n','\n') # Hoping to sanitise any DOS linebreaks
-                # script = (f"{setup_script}; printf %s\\\\n "
-                #           f"{{0..{n_image_groups - 1}}} | xargs -P 40 -n 1 -IX "
-                #           f"bash -c \"cd runX ; ./cellprofiler_runX; \";")
-
-                # script = script.replace('\r\n', '\n')
-                # script = script.replace(";;", ";")
+                
                 run = rynner.create_run(
                     jobname=self.runname.value.replace(' ', '_'),
                     script=script, uploads=uploads, downloads=downloads)
