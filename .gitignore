@@ -6,3 +6,5 @@ RunOnCluster.egg-info/
 setup.py
 loadimagesfromomero.py
 CellProfiler-plugins/
+__init__.py
+*.pyc
