@@ -5,10 +5,10 @@ A CellProfiler module for submitting batch jobs to a cluster running Slurm. Curr
 
 ## Installation
 ### Windows
-Note as our plugin requires additional libraries which aren’t packaged with CellProfiler 4.2.2rc, you’ll need to build CellProfiler from source rather than using a pre-packaged version. ([Reference](https://cellprofiler-manual.s3.amazonaws.com/CellProfiler-4.0.6/help/other_plugins.html?highlight=plugins))
+Note as our plugin requires additional libraries which aren’t packaged with CellProfiler 4, you’ll need to build CellProfiler from source rather than using a pre-packaged version. ([Reference](https://cellprofiler-manual.s3.amazonaws.com/CellProfiler-4.0.6/help/other_plugins.html?highlight=plugins))
 
 ### Source Installation
-When running on Linux or developing your own plugins, the most straight forward method is to copy the plugin sources to your Cellprofiler plugins directory. It is recommended to use the default ``CellProfiler\plugins`` folder as your plugin directory, but you can still have the plugins in other locations. Follow the instructions for installing CellProfiler on the [Wiki](https://github.com/CellProfiler/CellProfiler/wiki). Choose you operating system on the right side panel. Once you have installed CellProfiler, set the plugins directory in Cellprofiler preferences, then save and close CellProfiler. 
+When running on Linux or developing your own plugins, the most straight forward method is to copy the plugin sources to your Cellprofiler plugins directory. It is recommended to use the default ``CellProfiler\plugins`` folder as your plugin directory, but you can still have the plugins in other locations. Follow the instructions for installing CellProfiler on the [Wiki](https://github.com/CellProfiler/CellProfiler/wiki). Choose you operating system on the right side panel. Once you have installed CellProfiler, set the plugins directory in Cellprofiler preferences, then save and restart CellProfiler. 
 
 Some useful guidlines for developing CellProfiler plugins:
 
@@ -20,20 +20,13 @@ Some useful guidlines for developing CellProfiler plugins:
 Please note [Previous plugins](https://github.com/sa2c/CellProfiler-RunOnCluster/archive/master.zip) do not fully work with the precompiled CellProfile executable (version 3.1.8), which has default settings for the SCW Sunbird cluster, can be found in [releases](https://github.com/sa2c/CellProfiler-RunOnCluster/releases/download/v1.0/CellProfiler.exe). These executables require that a Java Runtime Environment is installed. You can get one for example form [Java](https://www.java.com/en/download/).
 
 ### Latest Plugins
-Please download the [latest plugins](https://codeload.github.com/sa2c/CellProfiler-RunOnCluster/zip/refs/heads/cellprofiler-4.2.2rc) from this branch and move the files to your plugins directory. In the plugins directory, install the [Rynner](https://github.com/sa2c/Rynner) module and additional requirements for the plugins:
+Please download the [plugins](https://codeload.github.com/sa2c/CellProfiler-RunOnCluster/zip/refs/heads/cellprofiler-4.2.2rc) to your plugins directory. In the plugins directory, install the requirements for the plugins:
 
 ```
 python -m pip install -r requirements.txt
 ```
 
-Optional steps are:
-
-```
-pip install git+https://github.com/sa2c/Rynner.git@windows-patch
-pip install git+https://github.com/MYPei/libsubmit.git@python3-update
-```
-
-If `pip install` does not install the `Rynner` library properly (i.e. there is no ``Rynner`` folder inside ``site-packages``.). You should copy the `Rynner` folder in this repository and paste it inside ``side-packages``. You may also need to copy the `libsubmit` folder in this branch to ``side-packages``.
+Please be aware that if `pip install` does not install the `Rynner` or the `libsubmit` library properly (i.e. there is no ``Rynner`` folder inside ``site-packages``.). You should copy the `Rynner` folder in this repository and paste it inside ``side-packages``. You may also need to copy the `libsubmit` folder in this branch to ``side-packages``.
 
 ## Usage
 ### Submitting josb to cluster
@@ -53,6 +46,4 @@ Submit the pipeline by pressing `Analyze Images`. The plugin will copy the image
 
 ### Checking job status
 
-In CellProfiler 3, you can open the `ClusterView` module in the `Data Tools` menu, however, in CellPfoiler 4 the `Data Tools` menu has been merged into the Module list. Therefore, you will need to add the `ClusterView` plugin into the pipeline, then you will see a list of all runs submitted to the cluster. Under the run name the module will display `PENDING` for runs in queue or currently running and `COMPLETED` for runs that have stopped running. Click `Update` in the upper left corner to refresh the status of the runs. Use the `Download Results` button to download and inspect the results.
-
-If you have already downloaded the results, the button label will change to `Download Again`.
+In CellPfoiler 4, the `Data Tools` menu has been merged into the Module list, therefore, you will need to add the `ClusterView` plugin from the `Data Tools` category into the pipeline, then you will be able to select a list of all runs submitted to the cluster. Under the run name the module will display `PENDING` for runs in queue or currently running and `COMPLETED` for runs that have stopped running. Click `Update` button to refresh the status of the runs. Use the `Download Results` button to download and inspect the results. If you have already downloaded the results, the button label will change to `Download Again`.   
