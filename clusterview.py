@@ -584,7 +584,6 @@ class clusterView(cpm.Module):
             dialog_result = status_dialog.ShowModal()
             pass
         folder_name = self.run_folder_name.value
-        print(folder_name)
         dest_folder = self.dest_folder.get_absolute_path()
         dest_dir = os.path.join(dest_folder,folder_name)
         # Ask about subdirectory creation.

@@ -26,8 +26,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from copy import deepcopy
-#import sys
-#sys.path.append('C:\\Users\\tianyi.pan\\AppData\\Local\\Programs\\Python\\Python38\\Lib\\site-packages')
+import sys
 import pdb
 
 import cellprofiler_core
@@ -47,6 +46,9 @@ from cellprofiler_core.preferences import DEFAULT_INPUT_FOLDER_NAME
 from cellprofiler_core.preferences import DEFAULT_INPUT_SUBFOLDER_NAME
 from cellprofiler_core.preferences import DEFAULT_OUTPUT_FOLDER_NAME
 from cellprofiler_core.preferences import DEFAULT_OUTPUT_SUBFOLDER_NAME
+
+from cellprofiler_core.preferences import get_plugin_directory
+sys.path.append(get_plugin_directory())
 
 from CPRynner.CPRynner import CPRynner
 from CPRynner.CPRynner import update_cluster_parameters
@@ -250,24 +252,16 @@ class RunOnCluster(Module):
 
     @staticmethod
     def sanitise_scripts(script):
-        # Split by spaces
-        split_script = script.split(" ")
-        sc_trail = False
+        # Split by semicolons then check for entries that are just spaces
+        split_script = script.split(";")
         for i in range(len(split_script)):
             ss = split_script[i]
-            if len(ss) > 0:
-                if ss[-1] == ";": # If last entry is semicolon, ensure only one semicolon is trailing then put on alert
-                    ss = ss.rstrip(";")+";" 
-                if ss[0] == ";": # Check for leading semicolons and remove if trailing is active
-                    if sc_trail is True:
-                        ss = ss.lstrip(";")
-                if len(ss) > 0:
-                    if ss[-1] == ";":
-                        sc_trail = True
-                    else:
-                        sc_trail = False            
+            ss = ss.lstrip(" ").rstrip(" ")
+            if len(ss) > 0 and i > 0:
+                ss = " " + ss
+            split_script[i] = ss
         split_script = [ss for ss in split_script if len(ss) > 0]
-        end_script = " ".join(split_script)
+        end_script = ";".join(split_script).rstrip(" ").lstrip(" ")
         if end_script[-1] != ";":
             end_script = end_script+";"
         end_script = end_script.replace("\r\n","\n")
