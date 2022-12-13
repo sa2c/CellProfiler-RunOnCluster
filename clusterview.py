@@ -1,3 +1,5 @@
+# coding=utf-8
+
 """
 ClusterView
 =============
@@ -13,6 +15,8 @@ Supports 2D? Supports 3D? Respects masks?
 ============ ============ ===============
 YES          YES          NO
 ============ ============ ===============
+
+
 """
 
 import logging
@@ -28,8 +32,11 @@ import cellprofiler_core.module as cpm
 import cellprofiler_core.setting as cps
 import cellprofiler_core.preferences as cpprefs
 
-import CPRynner.CPRynner as CPRynner
+from cellprofiler_core.preferences import ABSOLUTE_FOLDER_NAME
+from cellprofiler_core.preferences import DEFAULT_OUTPUT_FOLDER_NAME
+from cellprofiler_core.preferences import DEFAULT_OUTPUT_SUBFOLDER_NAME
 
+import CPRynner.CPRynner as CPRynner
 
 class YesToAllMessageDialog(wx.Dialog):
     """
@@ -82,7 +89,6 @@ class YesToAllMessageDialog(wx.Dialog):
         self.EndModal(wx.ID_YESTOALL)
         self.Destroy()
 
-
 class ClusterviewFrame(wx.Frame):
     """
     A frame containing information on queued and accomplished runs,
@@ -108,20 +114,6 @@ class ClusterviewFrame(wx.Frame):
         self.panel.SetSizer(self.vbox)
         self.panel.SetAutoLayout(1)
         self.panel.SetupScrolling(scroll_x=False, scroll_y=True)
-
-    def update( self ):
-        """
-        Update the run list
-        """
-        rynner = CPRynner.CPRynner()
-        if rynner is not None:
-            self.runs = [ r for r in rynner.get_runs() if 'upload_time' in r ]
-            rynner.update(self.runs)
-            for run in self.runs:
-                run['status_time'] = rynner.read_time(run)
-            self.update_time = datetime.datetime.now()
-        else:
-            self.runs = []
 
     def build_view(self, vbox):
         # Build the contents for the window
@@ -173,10 +165,10 @@ class ClusterviewFrame(wx.Frame):
             hbox1 = wx.BoxSizer(wx.HORIZONTAL)
             hbox1.Add(st, flag=wx.RIGHT, border=8)
             vbox.Add(hbox1, flag=wx.EXPAND|wx.LEFT|wx.RIGHT|wx.TOP)
-            
+
             # The state of the run
             hbox2 = wx.BoxSizer(wx.HORIZONTAL)
-            time_since = int(datetime.datetime.fromtimestamp(int(run['status_time']))) #Error 1
+            time_since = str(datetime.datetime.fromtimestamp(int(run['status_time'])))
             st2 = wx.StaticText( self.panel,
                 label=run.status+" since " + time_since
             )
@@ -251,6 +243,22 @@ class ClusterviewFrame(wx.Frame):
         self.build_view(self.vbox)
         self.vbox.Layout()
         self.FitInside()
+
+    def update( self ):
+        """
+        Update the run list
+        """
+        rynner = CPRynner.CPRynner()
+        if rynner is not None:
+            self.runs = [ r for r in rynner.get_runs() if 'upload_time' in r ]
+            rynner.update(self.runs)
+            print(f"Number of runs found: {self.runs.count}")
+            for run in self.runs:
+                run['status_time'] = rynner.read_time(run)
+                print(f"Run {run} checked.")
+            self.update_time = datetime.datetime.now()
+        else:
+            self.runs = []
 
     def download( self, run ):
         """
@@ -385,7 +393,7 @@ class ClusterviewFrame(wx.Frame):
 
         message = 'The file '+name+' already exists. Append to the existing file?'
         if has_been_downloaded:
-            message +=  ' This file has already been downloaded and appending may result in dublication of data.'
+            message +=  ' This file has already been downloaded and appending may result in duplication of data.'
             dialog = YesToAllMessageDialog(self, message, 'Append to File')
         else:
             dialog = YesToAllMessageDialog(self, message, 'Append to File')
@@ -461,10 +469,6 @@ class clusterView(cpm.Module):
         self.update_button = cps.do_something.DoSomething(
             "Update job list.", "Update", self.update_module, doc = doc_) 
         
-        doc_ = "View the status of the currently selected cluster job. Opens new window."
-        self.status_button = cps.do_something.DoSomething(
-            "View job status.", "Status", self.run_status_window, doc = doc_)
-
         doc_ = "Update the cluster login settings."
         self.settings_button = cps.do_something.DoSomething(
             "Change cluster settings.", "Settings", self.on_settings_click, doc = doc_)
@@ -473,6 +477,20 @@ class clusterView(cpm.Module):
         self.logout_button = cps.do_something.DoSomething(
             "Logout from cluster.", "Logout", self.on_logout_click, doc = doc_)
 
+        doc_ = "Name of the selected run. Used as name for generated results folder."
+        self.run_folder_name = cps.text.Text("Run Name", self.choose_run.value, doc=doc_)
+
+        doc_ = "Choose destination folder for downloaded run files."
+        self.dest_folder = cps.text.Directory("File destination folder",
+                dir_choices=[DEFAULT_OUTPUT_FOLDER_NAME,
+                             ABSOLUTE_FOLDER_NAME,
+                             DEFAULT_OUTPUT_SUBFOLDER_NAME],
+                value=DEFAULT_OUTPUT_SUBFOLDER_NAME, doc=doc_)
+
+        doc_ = "Download results files for the selected run. Requires selected run to have status COMPLETE."
+        self.download_button = cps.do_something.DoSomething(
+            "Download results.","Download",self.on_download_click, doc = doc_)
+
     def settings(self):
         result = [
             self.frame_button,
@@ -480,7 +498,9 @@ class clusterView(cpm.Module):
             self.update_button,
             self.settings_button,
             self.logout_button,
-            self.status_button
+            self.run_folder_name,
+            self.dest_folder,
+            self.download_button
         ]
         return result
 
@@ -501,7 +521,10 @@ class clusterView(cpm.Module):
             self.logout_button
         ]
         if self.choose_run.value != "None":
-            result += [self.status_button]
+            self.run_folder_name.value = self.choose_run.value
+            result += [self.run_folder_name,
+                       self.dest_folder,
+                       self.download_button]
         return result
 
     def run(self):
@@ -518,7 +541,7 @@ class clusterView(cpm.Module):
         """
         rynner = CPRynner.CPRynner()
         if rynner is not None:
-            self.runs = [ r for r in rynner.get_runs() if 'upload_time' in r ]
+            self.runs = [ r for r in rynner.get_runs()] # if 'upload_time' in r ]
             rynner.update(self.runs)
             for run in self.runs:
                 run['status_time'] = rynner.read_time(run)
@@ -526,9 +549,16 @@ class clusterView(cpm.Module):
         else:
             self.runs = []
         self.run_names = []
-        for r in self.runs:
-            self.run_names[r] = self.runs.job_name[r]
-        self.run_names += ["None"]
+        print(f"Number of runs detected: {len(self.runs)}")
+        for r in range(len(self.runs)):
+            run = self.runs[r]
+            print(f"{run['job_name']}")
+            self.run_names += [(run['job_name']+' ('+run['qid']+')')]
+        self.run_names += ["None"]        
+        doc_ = "Select a CellProfiler job that has been run on the cluster."
+        self.choose_run = cps.choice.Choice(
+            "Select CellProfiler cluster run.", choices=self.run_names, value="None", doc = doc_)
+        pass
 
     def on_logout_click( self ):
         CPRynner.logout()
@@ -545,11 +575,192 @@ class clusterView(cpm.Module):
         self.runs = []
         self.update_module()
 
-    def run_status_window(self):
-        run = self.runs[self.choose_run.index(self.choose_run.value)]
-        frame = RunStatusFrame(wx.GetApp().frame,self.choose_run.value,run)
-        frame.Show()
-        pass
+    def on_download_click(self):
+        run_ind = self.run_names.index(self.choose_run.value)
+        run = self.runs[run_ind]
+        if run['status'] != "COMPLETED":
+            status_message = "Unable to download until run is completed. Current status: " + run['status']
+            status_dialog = wx.MessageDialog(None,status_message,caption="Run status",style=wx.OK)
+            dialog_result = status_dialog.ShowModal()
+            pass
+        folder_name = self.run_folder_name.value
+        dest_folder = self.dest_folder.get_absolute_path()
+        dest_dir = os.path.join(dest_folder,folder_name)
+        # Ask about subdirectory creation.
+        if os.path.exists(dest_dir):
+            dir_message = "Subdirectory named " + folder_name + " already exists. Download files into subdirectory folder anyway?"
+            dir_dialog = wx.MessageDialog(None, dir_message, caption="Folder option", style=wx.OK|wx.CANCEL)
+            dir_result = dir_dialog.ShowModal()
+            if dir_result == wx.ID_CANCEL:
+                pass
+            elif dir_result == wx.ID_OK:
+                target_dir = dest_dir
+        else:
+            message = "Create subdirectory for results files?"
+            dialog = wx.MessageDialog(None, message, caption="Folder option",style=wx.YES_NO|wx.CANCEL)
+            dialog_result = dialog.ShowModal()
+            if dialog_result == wx.ID_CANCEL:
+                pass
+            elif dialog_result == wx.ID_NO:
+                target_dir = dest_folder
+            elif dialog_result == wx.ID_YES:
+                os.mkdir(dest_dir)
+                target_dir = dest_dir
+        # Begin download into destination directory. Adapted from previous ClusterView version.
+        # Download into a temporary directory
+        tmpdir = tempfile.mkdtemp()
+        self.download_to_tempdir(run, tmpdir)
+        # Move the files to the selected folder, handling file names and csv files
+        self.download_file_handling_setup()
+        has_been_downloaded = hasattr(run, 'downloaded') and run.downloaded
+        for runfolder, localdir in run.downloads:
+            self.handle_result_file( 
+                os.path.join(localdir, runfolder, 'results'),
+                target_dir,
+                has_been_downloaded
+            )
+        # Set a flag marking the run downloaded
+        run['downloaded'] = True
+        CPRynner.CPRynner().save_run_config( run )
+        self.runs[run_ind] = run
+        complete_message = "Download of run " + self.choose_run.value + " complete."
+        complete_dialog = wx.MessageDialog(None,complete_message,caption="Download status",style=wx.OK)
+        dialog_result = complete_dialog.ShowModal()
+
+    def download_to_tempdir(self, run, tmpdir):
+        """
+        Actually download the files from the cluster into tmpdir,
+        showing a progress dialog
+        """
+        run.downloads = [ [d[0], tmpdir] for d in run.downloads ]
+        CPRynner.CPRynner().start_download(run)
+        dialog = wx.GenericProgressDialog("Downloading","Downloading files")
+        maximum = dialog.GetRange()
+        while run['download_status'] < 1:
+            value = min( maximum, int(maximum*run['download_status']) )
+            dialog.Update(value)
+            time.sleep(0.04)
+        dialog.Destroy()
+
+    def download_file_handling_setup(self):
+        self.csv_dict = {}
+        self.yes_to_all_clicked = False
+
+    def rename_file(self, name):
+        """
+        Add a number at the end of a filename to create a unique new name
+        """
+        stripped_name, suffix = os.path.splitext(name)
+        n=2
+        new_name = stripped_name + '_' +str(n)+suffix
+        while os.path.isfile(new_name):
+            n += 1
+            new_name = stripped_name + '_' +str(n)+suffix
+        return new_name
+    
+    def handle_result_file( self, filename, target_directory, has_been_downloaded ):
+        """
+        Recursively check result files and move to the target directory. Handle conflicting file names
+        and csv files
+
+        Each run will create the same set of csv files to contain the measurement info. These need to be
+        combined into one and the image numbers need to be fixed. We will ask how the files should be handled
+        once for each file name and remember the answer in self.csv_dict
+        """
+        if os.path.isdir(filename):
+            # Recursively walk directories
+            for f in os.listdir(filename):
+                self.handle_result_file( os.path.join(filename, f), target_directory, has_been_downloaded)
+        else:
+            # Handle an actual file
+            name = os.path.basename(filename)
+            target_file = os.path.join(target_directory, name)
+            try:
+                if not os.path.isfile(target_file):
+                    # No file name conflict, just move
+                    shutil.move( filename, target_directory )
+                    if filename.endswith('.csv'):
+                        # File is .csv, we need to remember this one has been handled already
+                        self.csv_dict[name] = name
+                elif name.endswith('.csv'):
+                    # File exists and is csv. Ask the user whether to append or to create a new file
+                    if name not in self.csv_dict:
+                        append = self.ask_csv_append(name, has_been_downloaded)
+                        if append:
+                            self.csv_dict[name] = name
+                            self.handle_csv( filename, os.path.join(target_directory, name) )
+                        else:
+                            self.csv_dict[name] = self.rename_file(name)
+                            shutil.move( filename, os.path.join(target_directory, self.csv_dict[name]))
+                    else:
+                        self.handle_csv( filename, os.path.join(target_directory, self.csv_dict[name]))
+                else:
+                    # File exists, use a new name
+                    new_name = self.rename_file(name)
+                    shutil.move( filename, os.path.join(target_directory, new_name))
+            except Exception as e:
+                print(e)
+                wx.MessageBox(
+                    "Failed to move a file to the destination",
+                    caption="File error",
+                    style=wx.OK | wx.ICON_INFORMATION)
+                raise(e)
+
+    def ask_csv_append(self, name, has_been_downloaded):
+        if self.yes_to_all_clicked:
+            return True
+
+        message = 'The file '+name+' already exists. Append to the existing file?'
+        if has_been_downloaded:
+            message +=  ' This file has already been downloaded and appending may result in duplication of data.'
+            dialog = YesToAllMessageDialog(None, message, 'Append to File')
+        else:
+            dialog = YesToAllMessageDialog(None, message, 'Append to File')
+        answer = dialog.ShowModal()
+
+        if answer == wx.ID_NO:
+            return False
+        if answer == wx.ID_YESTOALL:
+            self.yes_to_all_clicked = True
+        return True
+        
+    def handle_csv( self, source, destination ):
+        """
+        Write the data rows of a csv file into an existing csv file.
+        Fix image numbering before writing 
+        """
+
+        # First check if the file contains the image number
+        outfile = open(destination,"rb")
+        header = outfile.next()
+        has_image_num = False
+        for index, cell in enumerate(header.split(',')):
+            if cell == 'ImageNumber':
+                image_num_cell = index
+                has_image_num = True
+
+        # If the image number is included, find the largest value
+        if has_image_num:
+            last_image_num = 1
+            for row in outfile:
+                image_num = int(row.split(',')[image_num_cell])
+                last_image_num = max(image_num, last_image_num)
+        outfile.close()
+
+        # Read the source file and write row by row to the destination
+        infile = open(source, 'rb')
+        infile.next()
+        outfile = open(destination,"ab")
+        for row in infile:
+            # If the image number is included, correct the number
+            if has_image_num:
+                cells = row.split(',')
+                local_num = int(cells[image_num_cell])
+                cells[image_num_cell] = str(image_num+local_num)
+                row = ','.join(cells)
+            outfile.write(row)
+        outfile.close()
+        infile.close()
 
     def validate_module(self, pipeline):
         """
@@ -568,113 +779,3 @@ class clusterView(cpm.Module):
     
     def volumetric(self):
         return True
-
-class RunStatusFrame(wx.Frame):
-    """
-    A pop-up window that displays the state of the chosen run and offers a download button if completed.
-    """
-    def __init__(self, parent, title, run):
-        super(RunStatusFrame, self).__init__(parent, title = title, size = (400,200))
-        self.run = run
-        self.run_complete = False
-        self.download_num = 0
-        self.InitUI()
-        self.Centre()
-
-    def InitUI(self):
-        font = wx.SystemSettings.GetFont(wx.SYS_SYSTEM_FONT)
-        font.SetPointSize(9)
-
-        self.panel = wx.Panel(self)
-        self.panel.SetBackgroundColour('#ededed')
-
-        run_text = wx.StaticText(self.panel, label=("Run name: "+self.run.job_name))
-        run_text.SetFont(font)
-        self.status_text = wx.StaticText(self.panel, label="Run status:   PENDING")
-        self.status_text.SetFont(font)           
-
-        # Create a download button                
-        self.download_number_text = wx.StaticText(self.panel, label="Times downloaded:   0")
-        self.download_number_text.SetFont(font)
-        self.download_avail_text = wx.StaticText(self.panel, label="Download available?:   False")
-        self.download_avail_text.SetFont(font)
-        self.download_button = wx.Button(self.panel, label='Download', size=(90,30))
-        self.download_button.Bind(wx.EVT_BUTTON, self.on_download_click)
-        self.download_button.SetFont(font)
-        self.download_button.Disable()
-        
-        # Update text and button:         
-        update_button = wx.Button(self.panel, label='Update', size=(90, 30))
-        update_button.Bind(wx.EVT_BUTTON, self.on_update_click)
-        update_button.SetFont(font)
-        self.update_time = datetime.datetime.now()
-        update_text = wx.StaticText(self.panel, label="")
-        update_text.SetFont(font)
-        self.set_timer(update_text)
-        
-        self.vbox = wx.BoxSizer(wx.VERTICAL)        
-        self.vbox.Add((-1, 5))
-        # Horizontal line for separation
-        vline = wx.StaticLine(self.panel, style=wx.LI_VERTICAL)
-        run_hbox = wx.BoxSizer(wx.HORIZONTAL)
-        run_hbox.Add(run_text, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 8)
-        run_hbox.Add(vline, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 8)
-        run_hbox.Add(self.status_text, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 8)
-        # Add the run name to the box sizer.
-        self.vbox.Add(run_hbox, 0, wx.EXPAND, 10)
-        # Vertical line for spacing
-        self.vbox.Add((-1, 5))
-        hline = wx.StaticLine(self.panel)
-        self.vbox.Add(hline, 0, wx.EXPAND, 10)    
-        # Incorporate the update button and text into a single box sizer
-        update_hbox = wx.BoxSizer(wx.HORIZONTAL)
-        update_hbox.Add(update_button, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 8)  
-        update_hbox.Add(update_text, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 8)              
-        # Add the update box sizer to the main box sizer 
-        self.vbox.Add((-1, 5))
-        self.vbox.Add(update_hbox, 0, wx.EXPAND, 10)
-        # Another vertical line for spacing
-        hline = wx.StaticLine(self.panel)
-        self.vbox.Add(hline, 0, wx.EXPAND, 10)
-        # Want some vertical alignment, so putting in another vbox
-        download_vbox = wx.BoxSizer(wx.VERTICAL)
-        download_hbox = wx.BoxSizer(wx.HORIZONTAL)
-        download_hbox.Add(self.download_button, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 8)
-        download_hbox.Add(self.download_avail_text, 0, wx.LEFT|wx.ALIGN_CENTER_VERTICAL, 8)
-        download_vbox.Add((-1,5))
-        download_vbox.Add(download_hbox, 0, wx.EXPAND, 10)
-        hline = wx.StaticLine(self.panel)
-        download_vbox.Add((-1,5))
-        download_vbox.Add(hline, 0, wx.EXPAND, 10)
-        download_vbox.Add(self.download_number_text, 0, wx.EXPAND, 10)
-
-        self.vbox.Add(download_vbox, 0, wx.EXPAND, 10)
-
-        self.panel.SetSizer(self.vbox)
-        self.panel.SetAutoLayout(1)
-
-    def on_update_click(self, event):
-        self.update_time = datetime.datetime.now()
-        self.status_text.SetLabel("Run status:  COMPLETE")
-        self.run_complete = True
-        self.download_avail_text.SetLabel("Download available?:   "+str(self.run_complete))
-        self.download_button.Enable()
-
-    def on_download_click(self, event):
-        if self.run_complete == True:
-            self.download_num += 1
-            self.download_number_text.SetLabel("Times downloaded:   "+str(self.download_num))
-
-    def set_timer(self, element):
-        """
-        Set a timer to update the time since last update
-        """
-        def update_st(event):
-            element.SetLabel("Last updated: "+timeago.format(self.update_time, locale='en_GB'))
-        def close(event):
-            self.timer.Stop()
-            self.Destroy()
-        self.timer = wx.Timer(self)
-        self.timer.Start(1000)
-        self.Bind(wx.EVT_TIMER, update_st, self.timer)
-        wx.EVT_CLOSE(self, close)
