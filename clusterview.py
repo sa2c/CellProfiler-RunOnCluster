@@ -576,23 +576,25 @@ class clusterView(cpm.Module):
         self.update_module()
 
     def on_download_click(self):
+        # TO DO: light refactoring of function to separate directory management from Rynner and SFTP functions
         run_ind = self.run_names.index(self.choose_run.value)
         run = self.runs[run_ind]
         if run['status'] != "COMPLETED":
             status_message = "Unable to download until run is completed. Current status: " + run['status']
             status_dialog = wx.MessageDialog(None,status_message,caption="Run status",style=wx.OK)
             dialog_result = status_dialog.ShowModal()
-            pass
+            return None
         folder_name = self.run_folder_name.value
         dest_folder = self.dest_folder.get_absolute_path()
         dest_dir = os.path.join(dest_folder,folder_name)
         # Ask about subdirectory creation.
+        # Partition into new function i.e. select_download_directory?
         if os.path.exists(dest_dir):
             dir_message = "Subdirectory named " + folder_name + " already exists. Download files into subdirectory folder anyway?"
             dir_dialog = wx.MessageDialog(None, dir_message, caption="Folder option", style=wx.OK|wx.CANCEL)
             dir_result = dir_dialog.ShowModal()
             if dir_result == wx.ID_CANCEL:
-                pass
+                return None
             elif dir_result == wx.ID_OK:
                 target_dir = dest_dir
         else:
@@ -600,7 +602,7 @@ class clusterView(cpm.Module):
             dialog = wx.MessageDialog(None, message, caption="Folder option",style=wx.YES_NO|wx.CANCEL)
             dialog_result = dialog.ShowModal()
             if dialog_result == wx.ID_CANCEL:
-                pass
+                return None
             elif dialog_result == wx.ID_NO:
                 target_dir = dest_folder
             elif dialog_result == wx.ID_YES:
@@ -608,7 +610,7 @@ class clusterView(cpm.Module):
                 target_dir = dest_dir
         # Begin download into destination directory. Adapted from previous ClusterView version.
         # Download into a temporary directory
-        tmpdir = tempfile.mkdtemp()
+        tmpdir = tempfile.mkdtemp() # Remove tempdir stage at some point?
         self.download_to_tempdir(run, tmpdir)
         # Move the files to the selected folder, handling file names and csv files
         self.download_file_handling_setup()
@@ -626,6 +628,11 @@ class clusterView(cpm.Module):
         complete_message = "Download of run " + self.choose_run.value + " complete."
         complete_dialog = wx.MessageDialog(None,complete_message,caption="Download status",style=wx.OK)
         dialog_result = complete_dialog.ShowModal()
+        # Post download cleanup of temp files
+        tmp_run_dir = os.path.basename(localdir)
+        if (tmp_run_dir[0:3] == "tmp"):
+            shutil.rmtree(localdir)
+            print(f"Removed temporary directory {tmp_run_dir} from {tmpdir}.")
 
     def download_to_tempdir(self, run, tmpdir):
         """
