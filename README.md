@@ -1,7 +1,7 @@
 # CellProfiler-RunOnCluster 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3275888.svg)](https://doi.org/10.5281/zenodo.3275888)
 
-A CellProfiler module for submitting batch jobs to a cluster running Slurm. Currently testing both plugins with [CellProfiler 4.2.1 and CellProfiler 4.2.2rc](https://cellprofiler.org/releases) on Windows 10/11.
+A CellProfiler module for submitting batch jobs to a cluster running Slurm, tested with [CellProfiler 4.2.1 and CellProfiler 4.2.2rc](https://cellprofiler.org/releases) on Windows 10 and 11.
 
 ## Installation
 ### Windows
@@ -47,3 +47,10 @@ Submit the pipeline by pressing `Analyze Images`. The plugin will copy the image
 ### Checking job status
 
 In CellPfoiler 4, the `Data Tools` menu has been merged into the Module list, therefore, you will need to add the `ClusterView` plugin from the `Data Tools` category into the pipeline, then you will be able to select a list of all runs submitted to the cluster. Under the run name the module will display `PENDING` for runs in queue or currently running and `COMPLETED` for runs that have stopped running. Click `Update` button to refresh the status of the runs. Use the `Download Results` button to download and inspect the results. If you have already downloaded the results, the button label will change to `Download Again`.   
+
+
+## TODO
+- [ ] Light refactoring of ClusterView functions to separate directory management from Rynner functions for easier testing.
+- [ ] Include testing for directory and file management functions in ClusterView.
+- [ ] (Optional) Consider folding ClusterView window into RunOnCluster as single module.
+- [ ] MacOS version
