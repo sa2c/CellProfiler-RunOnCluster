@@ -1,5 +1,3 @@
-# coding=utf-8
-
 """
 ClusterView
 =============
@@ -15,8 +13,6 @@ Supports 2D? Supports 3D? Respects masks?
 ============ ============ ===============
 YES          YES          NO
 ============ ============ ===============
-
-
 """
 
 import logging
@@ -405,7 +401,6 @@ class ClusterviewFrame(wx.Frame):
             self.yes_to_all_clicked = True
         return True
         
-
     def handle_csv( self, source, destination ):
         """
         Write the data rows of a csv file into an existing csv file.
@@ -444,7 +439,6 @@ class ClusterviewFrame(wx.Frame):
         outfile.close()
         infile.close()
                 
-
 class clusterView(cpm.Module):
     module_name = "ClusterView"
     category = "Data Tools"
