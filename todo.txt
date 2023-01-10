@@ -1,4 +1,0 @@
-Remaining tasks:
-1. Light refactoring of ClusterView functions to separate directory management from Rynner functions for easier testing.
-2. Include testing for directory and file management functions in ClusterView.
-3. (Optional) Consider folding ClusterView window into RunOnCluster as single module.
