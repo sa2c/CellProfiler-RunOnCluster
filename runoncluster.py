@@ -22,12 +22,10 @@ import os
 import re
 from typing import List
 import wx
+import sys
+from copy import deepcopy
 import logging
 logger = logging.getLogger(__name__)
-
-from copy import deepcopy
-import sys
-import pdb
 
 import cellprofiler_core
 from cellprofiler_core.module import Module

@@ -3,8 +3,6 @@ Creates an instance of Rynner to be shared between the
 clusterview and runnoncluster plugins.
 """
 
-from future import *
-
 # Libsubmit creates a .script file in the working directory.
 # To avoid clutter, we run in a temp directory
 import tempfile, os
