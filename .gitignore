@@ -2,9 +2,9 @@ venv/
 .idea/
 __pycache__/
 RunOnCluster.egg-info/
+CellProfiler-plugins/
 */__pycache__/
+__init__.py
 setup.py
 loadimagesfromomero.py
-CellProfiler-plugins/
-__init__.py
 *.pyc
