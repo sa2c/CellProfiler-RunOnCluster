@@ -407,19 +407,6 @@ class RunOnCluster(Module):
         # The submission happens in prepare run.
         pass
 
-    # def validate_module(self, pipeline):
-    #     """Make sure the module settings are valid"""
-    #     # This must be the last module in the pipeline
-    #     if id(self) != id(pipeline.modules()[-1]):
-    #         raise ValidationError((f"The RunOnCluster module must be the last "
-    #                                f"in the pipeline."), self.runname)
-
-    #     max_runtime = int(cluster_max_runtime())
-    #     if self.max_walltime.value >= max_runtime:
-    #         raise ValidationError(
-    #             f"The maximum runtime must be less than {max_runtime} hours.",
-    #             self.max_walltime)
-
     def validate_module_warnings(self, pipeline):
         """Warn user re: Test mode """
         if pipeline.test_mode:

@@ -25,7 +25,7 @@ class clusterSettingDialog(wx.Dialog):
 
     def __init__(self, cluster_address, tasks_per_node, work_dir, setup_script, run_command):
         """Constructor"""
-        super(clusterSettingDialog, self).__init__(
+        super().__init__(
             None, title="Login", size=(420, 540))
 
         self.panel = wx.Panel(self)
@@ -157,7 +157,7 @@ class LoginDialog(wx.Dialog):
 
     def __init__(self, username=''):
         """Constructor"""
-        super(LoginDialog, self).__init__(None, title="Login", size=(300, 180))
+        super().__init__(None, title="Login", size=(300, 180))
 
         self.panel = wx.Panel(self)
 
@@ -338,8 +338,6 @@ def _create_rynner():
         work_dir = work_dir.format(username=username)
         print("Checking rynner directories on initialisation:")
         print(f"Cluster working directory: {work_dir}")
-        # tmpdir = os.path.join(work_dir,tempfile.mkdtemp())
-        # print(f"Generated temporary directory: {tmpdir}")
 
         provider = SlurmProvider(
             'compute',

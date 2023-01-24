@@ -41,7 +41,7 @@ class YesToAllMessageDialog(wx.Dialog):
     """
 
     def __init__(self, parent, message, title):
-        super(YesToAllMessageDialog, self).__init__(
+        super().__init__(
             parent, title=title, size=(310, 210))
         self.panel = wx.Panel(self)
 
@@ -99,7 +99,7 @@ class ClusterviewFrame(wx.Frame):
 
     def __init__(self, parent, title):
         # First update runs, then create the window
-        super(ClusterviewFrame, self).__init__(
+        super().__init__(
             parent, title=title, size=(400, 400))
         self.update_time = datetime.datetime.now()
         self.update()
