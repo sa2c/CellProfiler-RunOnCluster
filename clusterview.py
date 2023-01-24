@@ -398,13 +398,14 @@ class ClusterviewFrame(wx.Frame):
                     "Failed to move a file to the destination",
                     caption="File error",
                     style=wx.OK | wx.ICON_INFORMATION)
-                raise (e)
+                raise e
 
     def ask_csv_append(self, name, has_been_downloaded):
         if self.yes_to_all_clicked:
             return True
 
-        message = 'The file '+name+' already exists. Append to the existing file?'
+        message = (f"The file  {name} already exists. "
+                   f"Append to the existing file?")
         if has_been_downloaded:
             message += ' This file has already been downloaded and appending may result in duplication of data.'
             dialog = YesToAllMessageDialog(self, message, 'Append to File')
@@ -736,13 +737,14 @@ class clusterView(cpm.Module):
                     "Failed to move a file to the destination",
                     caption="File error",
                     style=wx.OK | wx.ICON_INFORMATION)
-                raise (e)
+                raise e
 
     def ask_csv_append(self, name, has_been_downloaded):
         if self.yes_to_all_clicked:
             return True
 
-        message = 'The file '+name+' already exists. Append to the existing file?'
+        message = (f"The file  {name} already exists. "
+                   f"Append to the existing file?")
         if has_been_downloaded:
             message += ' This file has already been downloaded and appending may result in duplication of data.'
             dialog = YesToAllMessageDialog(None, message, 'Append to File')
