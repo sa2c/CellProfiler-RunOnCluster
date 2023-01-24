@@ -10,7 +10,9 @@ will then be processed independently. The download method in the
 ClusterView plugin automatically combines these back into a single
 result folder.
 Should be placed at the end of the image processing pipeline.
+
 |
+
 ============ ============ ===============
 Supports 2D? Supports 3D? Respects masks?
 ============ ============ ===============
@@ -18,6 +20,29 @@ YES          YES          NO
 ============ ============ ===============
 """
 
+from CPRynner.CPRynner import cluster_max_runtime
+from CPRynner.CPRynner import cluster_run_command
+from CPRynner.CPRynner import cluster_setup_script
+from CPRynner.CPRynner import cluster_tasks_per_node
+from CPRynner.CPRynner import update_cluster_parameters
+from CPRynner.CPRynner import CPRynner
+from cellprofiler_core.preferences import get_plugin_directory
+from cellprofiler_core.preferences import DEFAULT_OUTPUT_SUBFOLDER_NAME
+from cellprofiler_core.preferences import DEFAULT_OUTPUT_FOLDER_NAME
+from cellprofiler_core.preferences import DEFAULT_INPUT_SUBFOLDER_NAME
+from cellprofiler_core.preferences import DEFAULT_INPUT_FOLDER_NAME
+from cellprofiler_core.preferences import ABSOLUTE_FOLDER_NAME
+from cellprofiler_core.setting.text import Directory
+from cellprofiler_core.constants.measurement import F_BATCH_DATA_H5
+from cellprofiler_core.pipeline import Pipeline
+from cellprofiler_core.workspace import Workspace
+from cellprofiler_core.measurement import Measurements
+from cellprofiler_core.preferences import get_default_output_directory
+from cellprofiler_core.setting.do_something import DoSomething
+from cellprofiler_core.setting.text import Integer, Text
+from cellprofiler_core.setting import Binary, ValidationError
+from cellprofiler_core.module import Module
+import cellprofiler_core
 import os
 import re
 from typing import List
@@ -26,34 +51,7 @@ import sys
 from copy import deepcopy
 import logging
 logger = logging.getLogger(__name__)
-
-import cellprofiler_core
-from cellprofiler_core.module import Module
-from cellprofiler_core.setting import Binary, ValidationError
-from cellprofiler_core.setting.text import Integer, Text
-from cellprofiler_core.setting.do_something import DoSomething
-from cellprofiler_core.preferences import get_default_output_directory
-from cellprofiler_core.measurement import Measurements
-from cellprofiler_core.workspace import Workspace
-from cellprofiler_core.pipeline import Pipeline
-from cellprofiler_core.constants.measurement import F_BATCH_DATA_H5
-
-from cellprofiler_core.setting.text import Directory
-from cellprofiler_core.preferences import ABSOLUTE_FOLDER_NAME
-from cellprofiler_core.preferences import DEFAULT_INPUT_FOLDER_NAME
-from cellprofiler_core.preferences import DEFAULT_INPUT_SUBFOLDER_NAME
-from cellprofiler_core.preferences import DEFAULT_OUTPUT_FOLDER_NAME
-from cellprofiler_core.preferences import DEFAULT_OUTPUT_SUBFOLDER_NAME
-
-from cellprofiler_core.preferences import get_plugin_directory
 sys.path.append(get_plugin_directory())
-
-from CPRynner.CPRynner import CPRynner
-from CPRynner.CPRynner import update_cluster_parameters
-from CPRynner.CPRynner import cluster_tasks_per_node
-from CPRynner.CPRynner import cluster_setup_script
-from CPRynner.CPRynner import cluster_run_command
-from CPRynner.CPRynner import cluster_max_runtime
 
 
 class RunOnCluster(Module):
@@ -111,7 +109,8 @@ class RunOnCluster(Module):
 
         doc_ = (f"Set to Yes if the the images are included as a single image "
                 f"archive, such as an Ism file.")
-        self.is_archive = Binary(text="Is image archive", value=False, doc=doc_)
+        self.is_archive = Binary(
+            text="Is image archive", value=False, doc=doc_)
 
         doc_ = "The number of measurements in the archive file."
         self.measurements_in_archive = Integer(
@@ -135,13 +134,13 @@ class RunOnCluster(Module):
 
         doc_ = (f"Choose where local copies of remote scripts and batch data are"
                 f" saved.")
-        self.script_directory = Directory("Local script directory", 
-                dir_choices=[DEFAULT_OUTPUT_FOLDER_NAME,
-                             DEFAULT_INPUT_FOLDER_NAME,
-                             ABSOLUTE_FOLDER_NAME,
-                             DEFAULT_OUTPUT_SUBFOLDER_NAME,
-                             DEFAULT_INPUT_SUBFOLDER_NAME,],
-                value=DEFAULT_OUTPUT_SUBFOLDER_NAME, doc=doc_)
+        self.script_directory = Directory("Local script directory",
+                                          dir_choices=[DEFAULT_OUTPUT_FOLDER_NAME,
+                                                       DEFAULT_INPUT_FOLDER_NAME,
+                                                       ABSOLUTE_FOLDER_NAME,
+                                                       DEFAULT_OUTPUT_SUBFOLDER_NAME,
+                                                       DEFAULT_INPUT_SUBFOLDER_NAME,],
+                                          value=DEFAULT_OUTPUT_SUBFOLDER_NAME, doc=doc_)
 
         doc_ = "Change cluster and edit cluster settings."
         self.cluster_settings_button = DoSomething(
@@ -221,7 +220,7 @@ class RunOnCluster(Module):
             return [(int((i % n_measurements) / measurements_per_run), name) for
                     i, name in enumerate(list_)]
 
-    def assign_image_groups(self,file_list):
+    def assign_image_groups(self, file_list):
         max_tasks = int(cluster_tasks_per_node())
         n_images = len(file_list)
         if not self.is_archive.value:
@@ -232,20 +231,20 @@ class RunOnCluster(Module):
                                                n_measurements,
                                                measurements_per_run,
                                                self.type_first.value)
-            image_group_list = list(zip(*grouped_images))                                   
+            image_group_list = list(zip(*grouped_images))
             n_image_groups = max(image_group_list[0]) + 1
             # Add image files to uploads
             uploads = [[name, f"run{g}/images"] for g, name in
-                        grouped_images]
+                       grouped_images]
         else:
             if n_images > 1:
                 wx.MessageBox("Include only one image archive per run.",
-                            caption="Image error",
-                            style=wx.OK | wx.ICON_INFORMATION)
-                return (None, None, None)            
+                              caption="Image error",
+                              style=wx.OK | wx.ICON_INFORMATION)
+                return (None, None, None)
             uploads = [[file_list[0], 'images']]
             n_measurements = self.measurements_in_archive.value
-            n_image_groups = max_tasks        
+            n_image_groups = max_tasks
         return (uploads, grouped_images, n_image_groups)
 
     @staticmethod
@@ -262,21 +261,22 @@ class RunOnCluster(Module):
         end_script = ";".join(split_script).rstrip(" ").lstrip(" ")
         if end_script[-1] != ";":
             end_script = end_script+";"
-        end_script = end_script.replace("\r\n","\n")
-        end_script = end_script.lstrip(";") # Remove leading semicolons
+        end_script = end_script.replace("\r\n", "\n")
+        end_script = end_script.lstrip(";")  # Remove leading semicolons
         return end_script
 
-    def create_run_scripts(self,workspace,rynner,uploads,n_image_groups,grouped_images):
+    def create_run_scripts(self, workspace, rynner, uploads, n_image_groups, grouped_images):
         max_tasks = int(cluster_tasks_per_node())
         run_command = cluster_run_command()
         for g in range(n_image_groups):
             runscript_name = f"cellprofiler_run{g}"
-            local_script_path = os.path.join(rynner.provider.script_dir, runscript_name)
+            local_script_path = os.path.join(
+                rynner.provider.script_dir, runscript_name)
             if not self.is_archive.value:
                 n_measurements = int(len([i for i in grouped_images if i[
                     0] == g]) / self.n_images_per_measurement.value)
-                script = (f"{run_command} -p Batch_data.h5 -o " 
-                          f"results -i images -f 1 -l {n_measurements}" 
+                script = (f"{run_command} -p Batch_data.h5 -o "
+                          f"results -i images -f 1 -l {n_measurements}"
                           f" 2>>../cellprofiler_output")
                 script = self.sanitise_scripts(script)
             else:
@@ -287,7 +287,8 @@ class RunOnCluster(Module):
                     last = int((n_images_per_group + 1) * (g + 1))
                 else:
                     first = int(n_images_per_group * g + n_additional_images)
-                    last = int(n_images_per_group * (g + 1) + n_additional_images)
+                    last = int(n_images_per_group *
+                               (g + 1) + n_additional_images)
                     script = (f"{run_command} -p Batch_data.h5 -o "
                               f"results -i images -f {first} -l {last} 2>>"
                               f"../cellprofiler_output;")
@@ -296,16 +297,18 @@ class RunOnCluster(Module):
                 file.write(script)
                 uploads += [[local_script_path, f"run{g}"]]
             # save the pipeline on a per-node basis in directories labelled by job and subjob
-            batch_subdir = os.path.join(self.runname.value.replace(' ','_'),f"run{g}")
-            batch_dir = os.path.join(rynner.provider.script_dir,batch_subdir)
+            batch_subdir = os.path.join(
+                self.runname.value.replace(' ', '_'), f"run{g}")
+            batch_dir = os.path.join(rynner.provider.script_dir, batch_subdir)
             if not os.path.exists(batch_dir):
-                os.makedirs(batch_dir)  
-            path = self.save_remote_pipeline(workspace,os.path.join(batch_dir,F_BATCH_DATA_H5))
+                os.makedirs(batch_dir)
+            path = self.save_remote_pipeline(
+                workspace, os.path.join(batch_dir, F_BATCH_DATA_H5))
             # Add the pipeline
             uploads += [[path, f"run{g}"]]
         return uploads
-    
-    def create_job_script(self,n_image_groups):
+
+    def create_job_script(self, n_image_groups):
         setup_script = cluster_setup_script()
         script = (f"{setup_script} printf %s\\\\n "
                   f"{{0..{n_image_groups - 1}}} | xargs -P 40 -n 1 -IX "
@@ -328,10 +331,11 @@ class RunOnCluster(Module):
                 # Set walltime
                 rynner.provider.walltime = str(
                     self.max_walltime.value) + ":00:00"
-                
+
                 # Create the run data structure
                 file_list = pipeline.file_list
-                file_list = [name.replace('file:///', '') for name in file_list]
+                file_list = [name.replace('file:///', '')
+                             for name in file_list]
                 file_list = [name.replace('file:', '') for name in file_list]
                 file_list = [name.replace('%20', ' ') for name in file_list]
 
@@ -344,22 +348,24 @@ class RunOnCluster(Module):
 
                 # Divide measurements to runs
                 # according to the number of cores on a node in assign_image_groups
-                uploads, grouped_images, n_image_groups = self.assign_image_groups(file_list)
+                uploads, grouped_images, n_image_groups = self.assign_image_groups(
+                    file_list)
                 if (uploads is None) or (grouped_images is None) or (n_image_groups is None):
                     return False
-                
+
                 # The runs are downloaded in their separate folders.
                 # They can be processed later
                 output_dir = get_default_output_directory()
                 downloads = [[f"run{g}", output_dir] for g in
                              range(n_image_groups)]
-                
+
                 # Create run scripts and add to uploads with create_run_scripts
-                uploads = self.create_run_scripts(workspace,rynner,uploads,n_image_groups,grouped_images)
+                uploads = self.create_run_scripts(
+                    workspace, rynner, uploads, n_image_groups, grouped_images)
 
                 # Define the job to run in create_job_script
                 script = self.create_job_script(n_image_groups)
-                
+
                 run = rynner.create_run(
                     jobname=self.runname.value.replace(' ', '_'),
                     script=script, uploads=uploads, downloads=downloads)
@@ -464,11 +470,11 @@ class RunOnCluster(Module):
             self_copy = pipeline.module(self.module_num)
             self_copy.revision.value = int(
                 re.sub(r"\.|rc\d{1}", "", cellprofiler_core.__version__))
-            
+
             self_copy.batch_mode.value = True
             # Pipeline is readied for saving at this point
             pipeline.prepare_to_create_batch(target_workspace, self.alter_path)
-            
+
             pipeline.write_pipeline_measurement(m)
             orig_pipeline.write_pipeline_measurement(m, user_pipeline=True)
 
@@ -477,12 +483,12 @@ class RunOnCluster(Module):
             m.close()
 
     def save_remote_pipeline(self, workspace, outf=None):
-        
+
         if outf is None:
             path = get_default_output_directory()
             h5_path = os.path.join(path, F_BATCH_DATA_H5)
         else:
-            h5_path = outf 
+            h5_path = outf
 
         image_set_list = workspace.image_set_list
         pipeline = workspace.pipeline
@@ -505,9 +511,9 @@ class RunOnCluster(Module):
             self_copy = pipeline.module(self.module_num)
             self_copy.revision.value = int(
                 re.sub(r"\.|rc\d{1}", "", cellprofiler_core.__version__))
-            
+
         # Trim RunOnCluster and ClusterView modules from submitted pipeline
-            for module in reversed(pipeline.modules()): 
+            for module in reversed(pipeline.modules()):
                 if module.module_name == "RunOnCluster" or module.module_name == "ClusterView":
                     pipeline.remove_module(module.module_num)
 
