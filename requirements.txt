@@ -83,7 +83,7 @@ keras==2.8.0
 Keras-Preprocessing==1.1.2
 kiwisolver==1.0.1
 libclang==13.0.0
-libsubmit @ git+https://github.com/MYPei/libsubmit.git@dd93180873010710917ed8ad6bfc03b64b8836a1
+libsubmit @ git+https://github.com/TummyPan/libsubmit.git
 locket==0.2.1
 lxml==4.7.1
 mahotas==1.4.5

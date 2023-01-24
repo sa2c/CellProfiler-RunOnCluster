@@ -29,7 +29,6 @@ import cellprofiler_core.setting as cps
 import cellprofiler_core.module as cpm
 import wx
 import tempfile
-import numpy as np
 import logging
 logger = logging.getLogger(__package__)
 

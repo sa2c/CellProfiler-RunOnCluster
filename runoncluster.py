@@ -45,10 +45,8 @@ from cellprofiler_core.module import Module
 import cellprofiler_core
 import os
 import re
-from typing import List
 import wx
 import sys
-from copy import deepcopy
 import logging
 logger = logging.getLogger(__name__)
 sys.path.append(get_plugin_directory())
