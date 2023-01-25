@@ -3,17 +3,19 @@ Creates an instance of Rynner to be shared between the
 clusterview and runnoncluster plugins.
 """
 
+import os
+import tempfile
+
+import wx
+
 # Libsubmit creates a .script file in the working directory.
 # To avoid clutter, we run in a temp directory
 from cellprofiler_core.preferences import get_default_output_directory
+from libsubmit import SSHChannel
 from libsubmit.channels.errors import SSHException
 from libsubmit.launchers.launchers import SimpleLauncher
 from libsubmit.providers.slurm.slurm import SlurmProvider
-from libsubmit import SSHChannel
 from Rynner.rynner.rynner import Rynner
-import wx
-import tempfile
-import os
 
 workdir = tempfile.mkdtemp()
 os.chdir(workdir)

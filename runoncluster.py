@@ -20,34 +20,39 @@ YES          YES          NO
 ============ ============ ===============
 """
 
+import logging
 import os
 import re
-import wx
 import sys
-import logging
-from CPRynner.CPRynner import CPRynner
-from CPRynner.CPRynner import cluster_max_runtime
-from CPRynner.CPRynner import cluster_run_command
-from CPRynner.CPRynner import cluster_setup_script
-from CPRynner.CPRynner import cluster_tasks_per_node
-from CPRynner.CPRynner import update_cluster_parameters
+
 import cellprofiler_core
-from cellprofiler_core.preferences import get_plugin_directory
-from cellprofiler_core.preferences import DEFAULT_OUTPUT_SUBFOLDER_NAME
-from cellprofiler_core.preferences import DEFAULT_OUTPUT_FOLDER_NAME
-from cellprofiler_core.preferences import DEFAULT_INPUT_SUBFOLDER_NAME
-from cellprofiler_core.preferences import DEFAULT_INPUT_FOLDER_NAME
-from cellprofiler_core.preferences import ABSOLUTE_FOLDER_NAME
-from cellprofiler_core.setting.text import Directory
+import wx
 from cellprofiler_core.constants.measurement import F_BATCH_DATA_H5
-from cellprofiler_core.pipeline import Pipeline
-from cellprofiler_core.workspace import Workspace
 from cellprofiler_core.measurement import Measurements
-from cellprofiler_core.preferences import get_default_output_directory
-from cellprofiler_core.setting.do_something import DoSomething
-from cellprofiler_core.setting.text import Integer, Text
-from cellprofiler_core.setting import Binary, ValidationError
 from cellprofiler_core.module import Module
+from cellprofiler_core.pipeline import Pipeline
+from cellprofiler_core.preferences import (
+    ABSOLUTE_FOLDER_NAME,
+    DEFAULT_INPUT_FOLDER_NAME,
+    DEFAULT_INPUT_SUBFOLDER_NAME,
+    DEFAULT_OUTPUT_FOLDER_NAME,
+    DEFAULT_OUTPUT_SUBFOLDER_NAME,
+    get_default_output_directory,
+    get_plugin_directory,
+)
+from cellprofiler_core.setting import Binary, ValidationError
+from cellprofiler_core.setting.do_something import DoSomething
+from cellprofiler_core.setting.text import Directory, Integer, Text
+from cellprofiler_core.workspace import Workspace
+
+from CPRynner.CPRynner import (
+    CPRynner,
+    cluster_max_runtime,
+    cluster_run_command,
+    cluster_setup_script,
+    cluster_tasks_per_node,
+    update_cluster_parameters,
+)
 
 logger = logging.getLogger(__name__)
 sys.path.append(get_plugin_directory())

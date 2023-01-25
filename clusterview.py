@@ -15,21 +15,25 @@ YES          YES          NO
 ============ ============ ===============
 """
 
-import os
-import time
 import datetime
+import logging
+import os
 import shutil
 import tempfile
+import time
+
+import cellprofiler_core.module as cpm
+import cellprofiler_core.preferences as cpprefs
+import cellprofiler_core.setting as cps
 import timeago
 import wx
-import cellprofiler_core.module as cpm
-import cellprofiler_core.setting as cps
-import cellprofiler_core.preferences as cpprefs
-from cellprofiler_core.preferences import ABSOLUTE_FOLDER_NAME
-from cellprofiler_core.preferences import DEFAULT_OUTPUT_FOLDER_NAME
-from cellprofiler_core.preferences import DEFAULT_OUTPUT_SUBFOLDER_NAME
+from cellprofiler_core.preferences import (
+    ABSOLUTE_FOLDER_NAME,
+    DEFAULT_OUTPUT_FOLDER_NAME,
+    DEFAULT_OUTPUT_SUBFOLDER_NAME,
+)
+
 import CPRynner.CPRynner as CPRynner
-import logging
 
 logger = logging.getLogger(__package__)
 
