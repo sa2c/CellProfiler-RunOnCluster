@@ -15,21 +15,22 @@ YES          YES          NO
 ============ ============ ===============
 """
 
-import shutil
+import os
 import time
 import datetime
-import timeago
-import os
-import CPRynner.CPRynner as CPRynner
-from cellprofiler_core.preferences import DEFAULT_OUTPUT_SUBFOLDER_NAME
-from cellprofiler_core.preferences import DEFAULT_OUTPUT_FOLDER_NAME
-from cellprofiler_core.preferences import ABSOLUTE_FOLDER_NAME
-import cellprofiler_core.preferences as cpprefs
-import cellprofiler_core.setting as cps
-import cellprofiler_core.module as cpm
-import wx
+import shutil
 import tempfile
+import timeago
+import wx
+import cellprofiler_core.module as cpm
+import cellprofiler_core.setting as cps
+import cellprofiler_core.preferences as cpprefs
+from cellprofiler_core.preferences import ABSOLUTE_FOLDER_NAME
+from cellprofiler_core.preferences import DEFAULT_OUTPUT_FOLDER_NAME
+from cellprofiler_core.preferences import DEFAULT_OUTPUT_SUBFOLDER_NAME
+import CPRynner.CPRynner as CPRynner
 import logging
+
 logger = logging.getLogger(__package__)
 
 
@@ -40,8 +41,7 @@ class YesToAllMessageDialog(wx.Dialog):
     """
 
     def __init__(self, parent, message, title):
-        super().__init__(
-            parent, title=title, size=(310, 210))
+        super().__init__(parent, title=title, size=(310, 210))
         self.panel = wx.Panel(self)
 
         # First the message text
@@ -52,14 +52,13 @@ class YesToAllMessageDialog(wx.Dialog):
 
         # Three buttons with the appropriate labels
         button_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.yes_btn = wx.Button(
-            self.panel, wx.ID_YES, label="Yes", size=(60, 30))
+        self.yes_btn = wx.Button(self.panel, wx.ID_YES, label="Yes", size=(60, 30))
         button_sizer.Add(self.yes_btn, 0, wx.ALL, 5)
-        self.no_btn = wx.Button(self.panel, wx.ID_NO,
-                                label="No", size=(60, 30))
+        self.no_btn = wx.Button(self.panel, wx.ID_NO, label="No", size=(60, 30))
         button_sizer.Add(self.no_btn, 0, wx.ALL, 5)
         self.yestoall_btn = wx.Button(
-            self.panel, wx.ID_YESTOALL, label="Yes to All", size=(90, 30))
+            self.panel, wx.ID_YESTOALL, label="Yes to All", size=(90, 30)
+        )
         button_sizer.Add(self.yestoall_btn, 0, wx.ALL, 5)
 
         # Bind the buttons to functions
@@ -98,8 +97,7 @@ class ClusterviewFrame(wx.Frame):
 
     def __init__(self, parent, title):
         # First update runs, then create the window
-        super().__init__(
-            parent, title=title, size=(400, 400))
+        super().__init__(parent, title=title, size=(400, 400))
         self.update_time = datetime.datetime.now()
         self.update()
         self.InitUI()
@@ -108,7 +106,7 @@ class ClusterviewFrame(wx.Frame):
     def InitUI(self):
         # The containers in the window are organised here
         self.panel = wx.lib.scrolledpanel.ScrolledPanel(self)
-        self.panel.SetBackgroundColour('#ededed')
+        self.panel.SetBackgroundColour("#ededed")
         self.vbox = wx.BoxSizer(wx.VERTICAL)
 
         self.build_view(self.vbox)
@@ -127,7 +125,7 @@ class ClusterviewFrame(wx.Frame):
         vbox.Add((-1, 5))
 
         # The update button and info
-        btn = wx.Button(self.panel, label='Update', size=(90, 30))
+        btn = wx.Button(self.panel, label="Update", size=(90, 30))
         btn.Bind(wx.EVT_BUTTON, self.on_update_click)
 
         update_time_text = wx.StaticText(self.panel, label="")
@@ -142,12 +140,10 @@ class ClusterviewFrame(wx.Frame):
         vbox.Add(hbox, 0, wx.EXPAND, 10)
 
         # The logout and settings buttons in a separate sizer
-        logout_btn = wx.Button(self.panel, label='Logout', size=(90, 30))
+        logout_btn = wx.Button(self.panel, label="Logout", size=(90, 30))
         logout_btn.Bind(wx.EVT_BUTTON, self.on_logout_click)
-        settings_btn = wx.Button(
-            self.panel, label='Cluster Settings', size=(90, 30))
-        settings_btn.Bind(wx.EVT_BUTTON,
-                          self.on_cluster_settings_click)
+        settings_btn = wx.Button(self.panel, label="Cluster Settings", size=(90, 30))
+        settings_btn.Bind(wx.EVT_BUTTON, self.on_cluster_settings_click)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         hbox.Add((0, 0), 1, wx.ALIGN_CENTER_VERTICAL)
         hbox.Add(logout_btn, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, 8)
@@ -161,9 +157,9 @@ class ClusterviewFrame(wx.Frame):
 
         # Add a display for all runs in history
         self.run_displays = []
-        for run in sorted(self.runs, key=lambda k: k['upload_time'], reverse=True):
+        for run in sorted(self.runs, key=lambda k: k["upload_time"], reverse=True):
             # Run name
-            st = wx.StaticText(self.panel, label=run.job_name+":")
+            st = wx.StaticText(self.panel, label=run.job_name + ":")
             st.SetFont(font)
             hbox1 = wx.BoxSizer(wx.HORIZONTAL)
             hbox1.Add(st, flag=wx.RIGHT, border=8)
@@ -171,20 +167,17 @@ class ClusterviewFrame(wx.Frame):
 
             # The state of the run
             hbox2 = wx.BoxSizer(wx.HORIZONTAL)
-            time_since = str(datetime.datetime.fromtimestamp(
-                int(run['status_time'])))
-            st2 = wx.StaticText(self.panel,
-                                label=run.status+" since " + time_since
-                                )
+            time_since = str(datetime.datetime.fromtimestamp(int(run["status_time"])))
+            st2 = wx.StaticText(self.panel, label=run.status + " since " + time_since)
             hbox2.Add(st2)
             vbox.Add(hbox2, flag=wx.LEFT | wx.TOP, border=10)
 
-            if run.status == 'PENDING':
-                starttime = run['starttime']
+            if run.status == "PENDING":
+                starttime = run["starttime"]
                 hbox3 = wx.BoxSizer(wx.HORIZONTAL)
-                st3 = wx.StaticText(self.panel,
-                                    label="Estimated start time " + starttime
-                                    )
+                st3 = wx.StaticText(
+                    self.panel, label="Estimated start time " + starttime
+                )
                 hbox3.Add(st3)
                 vbox.Add(hbox3, flag=wx.LEFT | wx.TOP, border=10)
 
@@ -192,14 +185,13 @@ class ClusterviewFrame(wx.Frame):
             vbox.Add((-1, 5))
 
             # The download button
-            if run.status == 'COMPLETED':
-                if hasattr(run, 'downloaded') and run.downloaded:
-                    label = 'Download Again'
+            if run.status == "COMPLETED":
+                if hasattr(run, "downloaded") and run.downloaded:
+                    label = "Download Again"
                 else:
-                    label = 'Download Results'
+                    label = "Download Results"
                 btn = wx.Button(self.panel, label=label, size=(130, 40))
-                btn.Bind(wx.EVT_BUTTON, lambda e,
-                         r=run: self.on_download_click(e, r))
+                btn.Bind(wx.EVT_BUTTON, lambda e, r=run: self.on_download_click(e, r))
                 hbox3 = wx.BoxSizer(wx.HORIZONTAL)
                 hbox3.Add(btn)
                 vbox.Add(hbox3, flag=wx.ALIGN_RIGHT | wx.RIGHT, border=10)
@@ -208,13 +200,16 @@ class ClusterviewFrame(wx.Frame):
         """
         Set a timer to update the time since last update
         """
+
         def update_st(event):
-            element.SetLabel("Last updated: " +
-                             timeago.format(self.update_time, locale='en_GB'))
+            element.SetLabel(
+                "Last updated: " + timeago.format(self.update_time, locale="en_GB")
+            )
 
         def close(event):
             self.timer.Stop()
             self.Destroy()
+
         self.timer = wx.Timer(self)
         self.timer.Start(1000)
         self.Bind(wx.EVT_TIMER, update_st, self.timer)
@@ -257,11 +252,11 @@ class ClusterviewFrame(wx.Frame):
         """
         rynner = CPRynner.CPRynner()
         if rynner is not None:
-            self.runs = [r for r in rynner.get_runs() if 'upload_time' in r]
+            self.runs = [r for r in rynner.get_runs() if "upload_time" in r]
             rynner.update(self.runs)
             print(f"Number of runs found: {self.runs.count}")
             for run in self.runs:
-                run['status_time'] = rynner.read_time(run)
+                run["status_time"] = rynner.read_time(run)
                 print(f"Run {run} checked.")
             self.update_time = datetime.datetime.now()
         else:
@@ -282,16 +277,16 @@ class ClusterviewFrame(wx.Frame):
 
         # Move the files to the selected folder, handling file names and csv files
         self.download_file_handling_setup()
-        has_been_downloaded = hasattr(run, 'downloaded') and run.downloaded
+        has_been_downloaded = hasattr(run, "downloaded") and run.downloaded
         for runfolder, localdir in run.downloads:
             self.handle_result_file(
-                os.path.join(localdir, runfolder, 'results'),
+                os.path.join(localdir, runfolder, "results"),
                 target_directory,
-                has_been_downloaded
+                has_been_downloaded,
             )
 
         # Set a flag marking the run downloaded
-        run['downloaded'] = True
+        run["downloaded"] = True
         CPRynner.CPRynner().save_run_config(run)
 
         self.update()
@@ -302,14 +297,18 @@ class ClusterviewFrame(wx.Frame):
         Ask for a destination for the downloaded files
         """
         default_target = cpprefs.get_default_output_directory()
-        dialog = wx.DirDialog(None, "Choose an output directory", default_target,
-                              wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+        dialog = wx.DirDialog(
+            None,
+            "Choose an output directory",
+            default_target,
+            wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST,
+        )
         try:
             if dialog.ShowModal() == wx.ID_CANCEL:
                 return False
             target_directory = dialog.GetPath()
         except Exception:
-            wx.LogError('Failed to open directory!')
+            wx.LogError("Failed to open directory!")
             raise
         finally:
             dialog.Destroy()
@@ -324,8 +323,8 @@ class ClusterviewFrame(wx.Frame):
         CPRynner.CPRynner().start_download(run)
         dialog = wx.GenericProgressDialog("Downloading", "Downloading files")
         maximum = dialog.GetRange()
-        while run['download_status'] < 1:
-            value = min(maximum, int(maximum*run['download_status']))
+        while run["download_status"] < 1:
+            value = min(maximum, int(maximum * run["download_status"]))
             dialog.Update(value)
             time.sleep(0.04)
         dialog.Destroy()
@@ -340,10 +339,10 @@ class ClusterviewFrame(wx.Frame):
         """
         stripped_name, suffix = os.path.splitext(name)
         n = 2
-        new_name = stripped_name + '_' + str(n)+suffix
+        new_name = stripped_name + "_" + str(n) + suffix
         while os.path.isfile(new_name):
             n += 1
-            new_name = stripped_name + '_' + str(n)+suffix
+            new_name = stripped_name + "_" + str(n) + suffix
         return new_name
 
     def handle_result_file(self, filename, target_directory, has_been_downloaded):
@@ -358,8 +357,9 @@ class ClusterviewFrame(wx.Frame):
         if os.path.isdir(filename):
             # Recursively walk directories
             for f in os.listdir(filename):
-                self.handle_result_file(os.path.join(
-                    filename, f), target_directory, has_been_downloaded)
+                self.handle_result_file(
+                    os.path.join(filename, f), target_directory, has_been_downloaded
+                )
         else:
             # Handle an actual file
             name = os.path.basename(filename)
@@ -368,48 +368,52 @@ class ClusterviewFrame(wx.Frame):
                 if not os.path.isfile(target_file):
                     # No file name conflict, just move
                     shutil.move(filename, target_directory)
-                    if filename.endswith('.csv'):
+                    if filename.endswith(".csv"):
                         # File is .csv, we need to remember this one has been handled already
                         self.csv_dict[name] = name
-                elif name.endswith('.csv'):
+                elif name.endswith(".csv"):
                     # File exists and is csv. Ask the user whether to append or to create a new file
                     if name not in self.csv_dict:
                         append = self.ask_csv_append(name, has_been_downloaded)
                         if append:
                             self.csv_dict[name] = name
-                            self.handle_csv(filename, os.path.join(
-                                target_directory, name))
+                            self.handle_csv(
+                                filename, os.path.join(target_directory, name)
+                            )
                         else:
                             self.csv_dict[name] = self.rename_file(name)
-                            shutil.move(filename, os.path.join(
-                                target_directory, self.csv_dict[name]))
+                            shutil.move(
+                                filename,
+                                os.path.join(target_directory, self.csv_dict[name]),
+                            )
                     else:
-                        self.handle_csv(filename, os.path.join(
-                            target_directory, self.csv_dict[name]))
+                        self.handle_csv(
+                            filename,
+                            os.path.join(target_directory, self.csv_dict[name]),
+                        )
                 else:
                     # File exists, use a new name
                     new_name = self.rename_file(name)
-                    shutil.move(filename, os.path.join(
-                        target_directory, new_name))
+                    shutil.move(filename, os.path.join(target_directory, new_name))
             except Exception as e:
                 print(e)
                 wx.MessageBox(
                     "Failed to move a file to the destination",
                     caption="File error",
-                    style=wx.OK | wx.ICON_INFORMATION)
+                    style=wx.OK | wx.ICON_INFORMATION,
+                )
                 raise e
 
     def ask_csv_append(self, name, has_been_downloaded):
         if self.yes_to_all_clicked:
             return True
 
-        message = (f"The file  {name} already exists. "
-                   f"Append to the existing file?")
+        message = f"The file  {name} already exists. " f"Append to the existing file?"
         if has_been_downloaded:
-            message += ' This file has already been downloaded and appending may result in duplication of data.'
-            dialog = YesToAllMessageDialog(self, message, 'Append to File')
+            message += " This file has already been downloaded and appending may result in duplication of data."
+            dialog = YesToAllMessageDialog(self, message, "Append to File")
         else:
-            dialog = YesToAllMessageDialog(self, message, 'Append to File')
+            dialog = YesToAllMessageDialog(self, message, "Append to File")
         answer = dialog.ShowModal()
 
         if answer == wx.ID_NO:
@@ -421,15 +425,15 @@ class ClusterviewFrame(wx.Frame):
     def handle_csv(self, source, destination):
         """
         Write the data rows of a csv file into an existing csv file.
-        Fix image numbering before writing 
+        Fix image numbering before writing
         """
 
         # First check if the file contains the image number
         outfile = open(destination, "rb")
         header = outfile.next()
         has_image_num = False
-        for index, cell in enumerate(header.split(',')):
-            if cell == 'ImageNumber':
+        for index, cell in enumerate(header.split(",")):
+            if cell == "ImageNumber":
                 image_num_cell = index
                 has_image_num = True
 
@@ -437,21 +441,21 @@ class ClusterviewFrame(wx.Frame):
         if has_image_num:
             last_image_num = 1
             for row in outfile:
-                image_num = int(row.split(',')[image_num_cell])
+                image_num = int(row.split(",")[image_num_cell])
                 last_image_num = max(image_num, last_image_num)
         outfile.close()
 
         # Read the source file and write row by row to the destination
-        infile = open(source, 'rb')
+        infile = open(source, "rb")
         infile.next()
         outfile = open(destination, "ab")
         for row in infile:
             # If the image number is included, correct the number
             if has_image_num:
-                cells = row.split(',')
+                cells = row.split(",")
                 local_num = int(cells[image_num_cell])
-                cells[image_num_cell] = str(image_num+local_num)
-                row = ','.join(cells)
+                cells[image_num_cell] = str(image_num + local_num)
+                row = ",".join(cells)
             outfile.write(row)
         outfile.close()
         infile.close()
@@ -471,38 +475,53 @@ class clusterView(cpm.Module):
 
         doc_ = "Bring up old ClusterView frame."
         self.frame_button = cps.do_something.DoSomething(
-            "", "Cluster View", self.run_as_data_tool, doc=doc_)
+            "", "Cluster View", self.run_as_data_tool, doc=doc_
+        )
 
         doc_ = "Select a CellProfiler job that has been run on the cluster."
         self.choose_run = cps.choice.Choice(
-            "Select CellProfiler cluster run.", choices=self.run_names, value="None", doc=doc_)
+            "Select CellProfiler cluster run.",
+            choices=self.run_names,
+            value="None",
+            doc=doc_,
+        )
 
         doc_ = "Update the module's internal list of CellProfiler cluster runs."
         self.update_button = cps.do_something.DoSomething(
-            "Update job list.", "Update", self.update_module, doc=doc_)
+            "Update job list.", "Update", self.update_module, doc=doc_
+        )
 
         doc_ = "Update the cluster login settings."
         self.settings_button = cps.do_something.DoSomething(
-            "Change cluster settings.", "Settings", self.on_settings_click, doc=doc_)
+            "Change cluster settings.", "Settings", self.on_settings_click, doc=doc_
+        )
 
         doc_ = "Log out from the cluster. Log back in by updating cluster settings."
         self.logout_button = cps.do_something.DoSomething(
-            "Logout from cluster.", "Logout", self.on_logout_click, doc=doc_)
+            "Logout from cluster.", "Logout", self.on_logout_click, doc=doc_
+        )
 
         doc_ = "Name of the selected run. Used as name for generated results folder."
         self.run_folder_name = cps.text.Text(
-            "Run Name", self.choose_run.value, doc=doc_)
+            "Run Name", self.choose_run.value, doc=doc_
+        )
 
         doc_ = "Choose destination folder for downloaded run files."
-        self.dest_folder = cps.text.Directory("File destination folder",
-                                              dir_choices=[DEFAULT_OUTPUT_FOLDER_NAME,
-                                                           ABSOLUTE_FOLDER_NAME,
-                                                           DEFAULT_OUTPUT_SUBFOLDER_NAME],
-                                              value=DEFAULT_OUTPUT_SUBFOLDER_NAME, doc=doc_)
+        self.dest_folder = cps.text.Directory(
+            "File destination folder",
+            dir_choices=[
+                DEFAULT_OUTPUT_FOLDER_NAME,
+                ABSOLUTE_FOLDER_NAME,
+                DEFAULT_OUTPUT_SUBFOLDER_NAME,
+            ],
+            value=DEFAULT_OUTPUT_SUBFOLDER_NAME,
+            doc=doc_,
+        )
 
         doc_ = "Download results files for the selected run. Requires selected run to have status COMPLETE."
         self.download_button = cps.do_something.DoSomething(
-            "Download results.", "Download", self.on_download_click, doc=doc_)
+            "Download results.", "Download", self.on_download_click, doc=doc_
+        )
 
     def settings(self):
         result = [
@@ -513,7 +532,7 @@ class clusterView(cpm.Module):
             self.logout_button,
             self.run_folder_name,
             self.dest_folder,
-            self.download_button
+            self.download_button,
         ]
         return result
 
@@ -531,20 +550,18 @@ class clusterView(cpm.Module):
             self.choose_run,
             self.update_button,
             self.settings_button,
-            self.logout_button
+            self.logout_button,
         ]
         if self.choose_run.value != "None":
             self.run_folder_name.value = self.choose_run.value
-            result += [self.run_folder_name,
-                       self.dest_folder,
-                       self.download_button]
+            result += [self.run_folder_name, self.dest_folder, self.download_button]
         return result
 
     def run(self):
         pass
 
     def run_as_data_tool(self):
-        frame = ClusterviewFrame(wx.GetApp().frame, 'Cluster View')
+        frame = ClusterviewFrame(wx.GetApp().frame, "Cluster View")
         frame.Show()
         pass
 
@@ -558,7 +575,7 @@ class clusterView(cpm.Module):
             self.runs = [r for r in rynner.get_runs()]
             rynner.update(self.runs)
             for run in self.runs:
-                run['status_time'] = rynner.read_time(run)
+                run["status_time"] = rynner.read_time(run)
             self.update_time = datetime.datetime.now()
         else:
             self.runs = []
@@ -567,11 +584,15 @@ class clusterView(cpm.Module):
         for r in range(len(self.runs)):
             run = self.runs[r]
             print(f"{run['job_name']}")
-            self.run_names += [(run['job_name']+' ('+run['qid']+')')]
+            self.run_names += [(run["job_name"] + " (" + run["qid"] + ")")]
         self.run_names += ["None"]
         doc_ = "Select a CellProfiler job that has been run on the cluster."
         self.choose_run = cps.choice.Choice(
-            "Select CellProfiler cluster run.", choices=self.run_names, value="None", doc=doc_)
+            "Select CellProfiler cluster run.",
+            choices=self.run_names,
+            value="None",
+            doc=doc_,
+        )
         pass
 
     def on_logout_click(self):
@@ -593,11 +614,14 @@ class clusterView(cpm.Module):
         # TO DO: light refactoring of function to separate directory management from Rynner and SFTP functions
         run_ind = self.run_names.index(self.choose_run.value)
         run = self.runs[run_ind]
-        if run['status'] != "COMPLETED":
-            status_message = "Unable to download until run is completed. Current status: " + \
-                run['status']
+        if run["status"] != "COMPLETED":
+            status_message = (
+                "Unable to download until run is completed. Current status: "
+                + run["status"]
+            )
             status_dialog = wx.MessageDialog(
-                None, status_message, caption="Run status", style=wx.OK)
+                None, status_message, caption="Run status", style=wx.OK
+            )
             dialog_result = status_dialog.ShowModal()
             return None
         folder_name = self.run_folder_name.value
@@ -606,10 +630,14 @@ class clusterView(cpm.Module):
         # Ask about subdirectory creation.
         # Partition into new function i.e. select_download_directory?
         if os.path.exists(dest_dir):
-            dir_message = "Subdirectory named " + folder_name + \
-                " already exists. Download files into subdirectory folder anyway?"
+            dir_message = (
+                "Subdirectory named "
+                + folder_name
+                + " already exists. Download files into subdirectory folder anyway?"
+            )
             dir_dialog = wx.MessageDialog(
-                None, dir_message, caption="Folder option", style=wx.OK | wx.CANCEL)
+                None, dir_message, caption="Folder option", style=wx.OK | wx.CANCEL
+            )
             dir_result = dir_dialog.ShowModal()
             if dir_result == wx.ID_CANCEL:
                 return None
@@ -618,7 +646,8 @@ class clusterView(cpm.Module):
         else:
             message = "Create subdirectory for results files?"
             dialog = wx.MessageDialog(
-                None, message, caption="Folder option", style=wx.YES_NO | wx.CANCEL)
+                None, message, caption="Folder option", style=wx.YES_NO | wx.CANCEL
+            )
             dialog_result = dialog.ShowModal()
             if dialog_result == wx.ID_CANCEL:
                 return None
@@ -633,24 +662,25 @@ class clusterView(cpm.Module):
         self.download_to_tempdir(run, tmpdir)
         # Move the files to the selected folder, handling file names and csv files
         self.download_file_handling_setup()
-        has_been_downloaded = hasattr(run, 'downloaded') and run.downloaded
+        has_been_downloaded = hasattr(run, "downloaded") and run.downloaded
         for runfolder, localdir in run.downloads:
             self.handle_result_file(
-                os.path.join(localdir, runfolder, 'results'),
+                os.path.join(localdir, runfolder, "results"),
                 target_dir,
-                has_been_downloaded
+                has_been_downloaded,
             )
         # Set a flag marking the run downloaded
-        run['downloaded'] = True
+        run["downloaded"] = True
         CPRynner.CPRynner().save_run_config(run)
         self.runs[run_ind] = run
         complete_message = "Download of run " + self.choose_run.value + " complete."
         complete_dialog = wx.MessageDialog(
-            None, complete_message, caption="Download status", style=wx.OK)
+            None, complete_message, caption="Download status", style=wx.OK
+        )
         dialog_result = complete_dialog.ShowModal()
         # Post download cleanup of temp files
         tmp_run_dir = os.path.basename(localdir)
-        if (tmp_run_dir[0:3] == "tmp"):
+        if tmp_run_dir[0:3] == "tmp":
             shutil.rmtree(localdir)
             print(f"Removed temporary directory {tmp_run_dir} from {tmpdir}.")
 
@@ -663,8 +693,8 @@ class clusterView(cpm.Module):
         CPRynner.CPRynner().start_download(run)
         dialog = wx.GenericProgressDialog("Downloading", "Downloading files")
         maximum = dialog.GetRange()
-        while run['download_status'] < 1:
-            value = min(maximum, int(maximum*run['download_status']))
+        while run["download_status"] < 1:
+            value = min(maximum, int(maximum * run["download_status"]))
             dialog.Update(value)
             time.sleep(0.04)
         dialog.Destroy()
@@ -679,10 +709,10 @@ class clusterView(cpm.Module):
         """
         stripped_name, suffix = os.path.splitext(name)
         n = 2
-        new_name = stripped_name + '_' + str(n)+suffix
+        new_name = stripped_name + "_" + str(n) + suffix
         while os.path.isfile(new_name):
             n += 1
-            new_name = stripped_name + '_' + str(n)+suffix
+            new_name = stripped_name + "_" + str(n) + suffix
         return new_name
 
     def handle_result_file(self, filename, target_directory, has_been_downloaded):
@@ -697,8 +727,9 @@ class clusterView(cpm.Module):
         if os.path.isdir(filename):
             # Recursively walk directories
             for f in os.listdir(filename):
-                self.handle_result_file(os.path.join(
-                    filename, f), target_directory, has_been_downloaded)
+                self.handle_result_file(
+                    os.path.join(filename, f), target_directory, has_been_downloaded
+                )
         else:
             # Handle an actual file
             name = os.path.basename(filename)
@@ -707,48 +738,52 @@ class clusterView(cpm.Module):
                 if not os.path.isfile(target_file):
                     # No file name conflict, just move
                     shutil.move(filename, target_directory)
-                    if filename.endswith('.csv'):
+                    if filename.endswith(".csv"):
                         # File is .csv, we need to remember this one has been handled already
                         self.csv_dict[name] = name
-                elif name.endswith('.csv'):
+                elif name.endswith(".csv"):
                     # File exists and is csv. Ask the user whether to append or to create a new file
                     if name not in self.csv_dict:
                         append = self.ask_csv_append(name, has_been_downloaded)
                         if append:
                             self.csv_dict[name] = name
-                            self.handle_csv(filename, os.path.join(
-                                target_directory, name))
+                            self.handle_csv(
+                                filename, os.path.join(target_directory, name)
+                            )
                         else:
                             self.csv_dict[name] = self.rename_file(name)
-                            shutil.move(filename, os.path.join(
-                                target_directory, self.csv_dict[name]))
+                            shutil.move(
+                                filename,
+                                os.path.join(target_directory, self.csv_dict[name]),
+                            )
                     else:
-                        self.handle_csv(filename, os.path.join(
-                            target_directory, self.csv_dict[name]))
+                        self.handle_csv(
+                            filename,
+                            os.path.join(target_directory, self.csv_dict[name]),
+                        )
                 else:
                     # File exists, use a new name
                     new_name = self.rename_file(name)
-                    shutil.move(filename, os.path.join(
-                        target_directory, new_name))
+                    shutil.move(filename, os.path.join(target_directory, new_name))
             except Exception as e:
                 print(e)
                 wx.MessageBox(
                     "Failed to move a file to the destination",
                     caption="File error",
-                    style=wx.OK | wx.ICON_INFORMATION)
+                    style=wx.OK | wx.ICON_INFORMATION,
+                )
                 raise e
 
     def ask_csv_append(self, name, has_been_downloaded):
         if self.yes_to_all_clicked:
             return True
 
-        message = (f"The file  {name} already exists. "
-                   f"Append to the existing file?")
+        message = f"The file  {name} already exists. " f"Append to the existing file?"
         if has_been_downloaded:
-            message += ' This file has already been downloaded and appending may result in duplication of data.'
-            dialog = YesToAllMessageDialog(None, message, 'Append to File')
+            message += " This file has already been downloaded and appending may result in duplication of data."
+            dialog = YesToAllMessageDialog(None, message, "Append to File")
         else:
-            dialog = YesToAllMessageDialog(None, message, 'Append to File')
+            dialog = YesToAllMessageDialog(None, message, "Append to File")
         answer = dialog.ShowModal()
 
         if answer == wx.ID_NO:
@@ -760,14 +795,14 @@ class clusterView(cpm.Module):
     def handle_csv(self, source, destination):
         """
         Write the data rows of a csv file into an existing csv file.
-        Fix image numbering before writing 
+        Fix image numbering before writing
         """
         # First check if the file contains the image number
         outfile = open(destination, "rb")
         header = outfile.next()
         has_image_num = False
-        for index, cell in enumerate(header.split(',')):
-            if cell == 'ImageNumber':
+        for index, cell in enumerate(header.split(",")):
+            if cell == "ImageNumber":
                 image_num_cell = index
                 has_image_num = True
 
@@ -775,21 +810,21 @@ class clusterView(cpm.Module):
         if has_image_num:
             last_image_num = 1
             for row in outfile:
-                image_num = int(row.split(',')[image_num_cell])
+                image_num = int(row.split(",")[image_num_cell])
                 last_image_num = max(image_num, last_image_num)
         outfile.close()
 
         # Read the source file and write row by row to the destination
-        infile = open(source, 'rb')
+        infile = open(source, "rb")
         infile.next()
         outfile = open(destination, "ab")
         for row in infile:
             # If the image number is included, correct the number
             if has_image_num:
-                cells = row.split(',')
+                cells = row.split(",")
                 local_num = int(cells[image_num_cell])
-                cells[image_num_cell] = str(image_num+local_num)
-                row = ','.join(cells)
+                cells[image_num_cell] = str(image_num + local_num)
+                row = ",".join(cells)
             outfile.write(row)
         outfile.close()
         infile.close()
