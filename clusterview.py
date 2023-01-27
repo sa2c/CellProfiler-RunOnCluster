@@ -27,11 +27,9 @@ import cellprofiler_core.preferences as cpprefs
 import cellprofiler_core.setting as cps
 import timeago
 import wx
-from cellprofiler_core.preferences import (
-    ABSOLUTE_FOLDER_NAME,
-    DEFAULT_OUTPUT_FOLDER_NAME,
-    DEFAULT_OUTPUT_SUBFOLDER_NAME,
-)
+from cellprofiler_core.preferences import (ABSOLUTE_FOLDER_NAME,
+                                           DEFAULT_OUTPUT_FOLDER_NAME,
+                                           DEFAULT_OUTPUT_SUBFOLDER_NAME)
 
 import CPRynner.CPRynner as CPRynner
 
